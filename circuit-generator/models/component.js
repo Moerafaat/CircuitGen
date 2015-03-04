@@ -20,7 +20,7 @@ module.exports.Wire = function (inputs, outputs){
 	this.y = -1;
 };
 
-module.exports.And = function (inshortId.generate()puts, outputs){
+module.exports.And = function (inputs, outputs){
 	this.id = shortId.generate();
 	this.type = Type.AND;
 	this.inputs = inputs;
