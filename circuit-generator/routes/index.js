@@ -3,6 +3,8 @@ var multer = require('multer');
 var fs = require('fs');
 var router = express.Router();
 
+var Component = require('../models/component');
+
 function parse(content){
 	console.log(content);
 }
