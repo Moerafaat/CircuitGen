@@ -5,8 +5,8 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var flash = require('connect-flash');
-var fs = require('fs');
-var multer  = require('multer')
+var fs = require('fs'); //fs for file processing.
+var multer  = require('multer'); //Multer for file upload.
 
 var routes = require('./routes/index');
 
@@ -23,6 +23,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+//Configuring multer for file upload.
 app.use(multer({ 
     dest:                   './temp_uploads/',
 

@@ -1,24 +1,40 @@
+/*	Components Model  */
+
 var shortId = require('shortid');
 
+//Types enumerations.
 var Type = {
-	WIRE: 0,
-	AND: 1,
-	NAND: 2,
-	OR: 3,
-	NOR: 4,
-	XOR: 5,
-	NOT: 6
+	AND: 0,
+	NAND: 1,
+	OR: 2,
+	NOR: 3,
+	XOR: 4,
+	NOT: 5,
+	WIRE: 6,
+	BUS: 7
 };
 module.exports.Type = Type;
 
+
+
 module.exports.Wire = function (inputs, outputs){
+	this.id = shortId.generate(); //Component ID.
+	this.type = Type.WIRE; //Component type.
+	this.inputs = inputs; //Inputs array.
+	this.outputs = outputs; //Outputs array.
+	this.x = -1; //Vertical level.
+	this.y = -1; //Horizontal level.
+};
+
+module.exports.Bus = function (inputs, outputs){
 	this.id = shortId.generate();
-	this.type = Type.WIRE;
+	this.type = Type.BUS;
 	this.inputs = inputs;
 	this.outputs = outputs;
 	this.x = -1;
 	this.y = -1;
 };
+
 
 module.exports.And = function (inputs, outputs){
 	this.id = shortId.generate();
