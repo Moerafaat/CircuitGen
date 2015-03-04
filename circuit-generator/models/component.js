@@ -12,6 +12,7 @@ var Type = {
 module.exports.Type = Type;
 
 module.exports.Wire = function (inputs, outputs){
+	this.id = shortId.generate();
 	this.type = Type.WIRE;
 	this.inputs = inputs;
 	this.outputs = outputs;
