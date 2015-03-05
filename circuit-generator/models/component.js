@@ -104,12 +104,12 @@ module.exports.Readable = function(component, wires){
 };
 
 
-module.exports.And = function (model, x, outputs){
+module.exports.And = function (model, inputs, outputs){
 	this.id = shortId.generate(); //Component ID.
 	this.type = Type.AND; //Component type.
 	this.inputs = []; //Inputs array.
-	if(typeof x !== 'undefined'){
-		this.inputs = this.inputs.concat(x); 
+	if(typeof inputs !== 'undefined'){
+		this.inputs = this.inputs.concat(inputs); 
 	}
 	this.outputs = []; //Outputs array.
 	if(typeof outputs !== 'undefined')
