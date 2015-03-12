@@ -12,9 +12,9 @@ Framework and libraries:
 
 Implementaion Plan:
 -File processing (Complete).
--Netlist parsing (In-progress, almost complete).
--Establishing components objects and connections(In-progress, almost complete).
--Topological sorting and placement level analysis for each component.
+-Netlist parsing (Complete).
+-Establishing components objects and connections(Complete).
+-Topological sorting and placement level analysis for each component(Under research).
 -UI desing using AlloyUI.
--Circuit graphing using Joint.js.
+-Circuit graphing using Joint.js(In-progress).
 -Customizing netlist parsing using EDIF file (not guaranteed in the given timeframe, infrastructure ready).
