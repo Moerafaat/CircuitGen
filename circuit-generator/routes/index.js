@@ -40,6 +40,10 @@ router.get('/parse', function(req, res){ //Netlist upload view.
 	res.render('parser_test');
 });
 
+router.get('/generate', function(req, res){ //Circuit generation upload view.
+	res.render('joint_test');
+});
+
 router.post('/parse', function(req, res){ //Netlist file parser.
 	//console.log(req.files.netlist);
 	var filePath = './' + req.files.netlist.path; //Full file path.
