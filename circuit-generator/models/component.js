@@ -18,7 +18,7 @@ module.exports.Type = Type;
 
 
 
-module.exports.Wire = function (input, outputs){
+module.exports.wire = function (input, outputs){
 	this.id = shortId.generate(); //Component ID.
 	this.type = Type.WIRE; //Component type.
 	this.inPort = input; //Input port.
@@ -104,12 +104,12 @@ module.exports.Readable = function(component, wires){
 };
 
 
-module.exports.And = function (model, inputs, outputs){
+module.exports.and = function (model, input, outputs){
 	this.id = shortId.generate(); //Component ID.
 	this.type = Type.AND; //Component type.
 	this.inputs = []; //Inputs array.
-	if(typeof inputs !== 'undefined'){
-		this.inputs = this.inputs.concat(inputs); 
+	if(typeof input !== 'undefined'){
+		this.inputs = this.inputs.concat(inpur); 
 	}
 	this.outputs = []; //Outputs array.
 	if(typeof outputs !== 'undefined')
@@ -137,7 +137,7 @@ module.exports.And = function (model, inputs, outputs){
 	};
 };
 
-module.exports.Or = function (model, inputs, outputs){
+module.exports.or = function (model, inputs, outputs){
 	this.id = shortId.generate();
 	this.type = Type.OR;
 	this.inputs = []; //Inputs array.
@@ -165,7 +165,7 @@ module.exports.Or = function (model, inputs, outputs){
 	};
 };
 
-module.exports.Nand = function (model, inputs, outputs){
+module.exports.nand = function (model, inputs, outputs){
 	this.id = shortId.generate();
 	this.type = Type.NAND;
 	this.inputs = []; //Inputs array.
@@ -193,7 +193,7 @@ module.exports.Nand = function (model, inputs, outputs){
 	};
 };
 
-module.exports.Nor = function (model, inputs, outputs){
+module.exports.nor = function (model, inputs, outputs){
 	this.id = shortId.generate();
 	this.type = Type.NOR;
 	this.inputs = []; //Inputs array.
@@ -221,7 +221,7 @@ module.exports.Nor = function (model, inputs, outputs){
 	};
 };
 
-module.exports.Xor = function (model, inputs, outputs){
+module.exports.xor = function (model, inputs, outputs){
 	this.id = shortId.generate();
 	this.type = Type.XOR;
 	this.inputs = []; //Inputs array.
@@ -249,7 +249,7 @@ module.exports.Xor = function (model, inputs, outputs){
 	};
 };
 
-module.exports.Not = function (model, inputs, outputs){
+module.exports.not = function (model, inputs, outputs){
 	this.id = shortId.generate();
 	this.type = Type.NOT;
 	this.inputs = []; //Inputs array.
@@ -282,66 +282,66 @@ module.exports.EDIF = {
 		name: 'AND2X1',
 		inputPorts: ['A', 'B'],
 		outputPorts: ['Y'],
-		primitive: 'And'
+		primitive: 'and'
 	},
 	AND2X2:{
 		name: 'AND2X2',
 		inputPorts: ['A', 'B'],
 		outputPorts: ['Y'],
-		primitive: 'And'
+		primitive: 'and'
 	},
 	NAND2X1:{
 		name: 'NAND2X1',
 		inputPorts: ['A', 'B'],
 		outputPorts: ['Y'],
-		primitive: 'Nand'
+		primitive: 'nand'
 	},
 	NAND2X2: {
 		name: 'NAND2X2',
 		inputPorts: ['A', 'B'],
 		outputPorts: ['Y'],
-		primitive: 'Nand'
+		primitive: 'nand'
 	},
 	OR2X1:{
 		name: 'OR2X1',
 		inputPorts: ['A', 'B'],
 		outputPorts: ['Y'],
-		primitive: 'Or'
+		primitive: 'or'
 	},
 	OR2X2:{
 		name: 'OR2X2',
 		inputPorts: ['A', 'B'],
 		outputPorts: ['Y'],
-		primitive: 'Or'
+		primitive: 'or'
 	},
 	NOR2X1: {
 		name: 'NOR2X1',
 		inputPorts: ['A', 'B'],
 		outputPorts: ['Y'],
-		primitive: 'Nor'
+		primitive: 'nor'
 	},
 	NOR2X2: {
 		name: 'NOR2X2',
 		inputPorts: ['A', 'B'],
 		outputPorts: ['Y'],
-		primitive: 'Nor'
+		primitive: 'nor'
 	},
 	XOR2X1: {
 		name: 'XOR2X1',
 		inputPorts: ['A', 'B'],
 		outputPorts: ['Y'],
-		primitive: 'Xor'
+		primitive: 'xor'
 	},
 	XOR2X2: {
 		name: 'XOR2X2',
 		inputPorts: ['A', 'B'],
 		outputPorts: ['Y'],
-		primitive: 'Xor'
+		primitive: 'xor'
 	},
 	INVX1:{
 		name: 'INVX1',
 		inputPorts: ['A'],
 		outputPorts: ['Y'],
-		primitive: 'Not'
+		primitive: 'not'
 	}
 };

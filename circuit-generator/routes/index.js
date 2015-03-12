@@ -4,14 +4,14 @@ var fs = require('fs');
 var router = express.Router();
 
 var Component = require('../models/component');
-var Wire = Component.Wire;
-//var Bus = Component.Bus;
-var And = Component.And;
-var Nand = Component.Nand;
-var Or =Component.Or;
-var Nor = Component.Nor;
-var Xor = Component.Xor;
-var Not = Component.Not;
+var wire = Component.wire;
+//var bus = Component.bus;
+var and = Component.and;
+var nand = Component.nand;
+var or =Component.or;
+var nor = Component.nor;
+var xor = Component.xor;
+var not = Component.not;
 
 function countArray(obj){ //Key-value array size counter.
 	var size = 0, key;
@@ -107,7 +107,7 @@ function parse(content){ //Netlist parsing function.
 			var wireRegex = getWireRegEx('wire');
 			var wireName = wireRegex.exec(lines[i])[1];
 			if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
-				wires [wireName] = new Wire();
+				wires [wireName] = new wire();
 				console.log('Captured wire: ' + wireName);
 			}else{
 				console.log('Parsing error, duplicate declaration ' + wireName);
@@ -127,7 +127,7 @@ function parse(content){ //Netlist parsing function.
 				for(j = busLSB; j <= busMSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
-						wires [wireName] = new Wire();
+						wires [wireName] = new wire();
 						console.log('Captured wire: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
@@ -139,7 +139,7 @@ function parse(content){ //Netlist parsing function.
 				for(j = busMSB; j <= busLSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
-						wires [wireName] = new Wire();
+						wires [wireName] = new wire();
 						console.log('Captured wire: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
@@ -153,7 +153,7 @@ function parse(content){ //Netlist parsing function.
 			var inputRegex = getWireRegEx('input');
 			var wireName = inputRegex.exec(lines[i])[1];
 			if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
-				inputs [wireName] = new Wire();
+				inputs [wireName] = new wire();
 				console.log('Captured input: ' + wireName);
 			}else{
 				console.log('Parsing error, duplicate declaration ' + wireName);
@@ -173,7 +173,7 @@ function parse(content){ //Netlist parsing function.
 				for(j = busLSB; j <= busMSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof inputs[wireName] === 'undefined'){ //Checking for double declaration.
-						inputs [wireName] = new Wire();
+						inputs [wireName] = new wire();
 						console.log('Captured input: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
@@ -185,7 +185,7 @@ function parse(content){ //Netlist parsing function.
 				for(j = busMSB; j <= busLSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof inputs[wireName] === 'undefined'){ //Checking for double declaration.
-						inputs [wireName] = new Wire();
+						inputs [wireName] = new wire();
 						console.log('Captured wire: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
@@ -200,7 +200,7 @@ function parse(content){ //Netlist parsing function.
 			var outputRegex = getWireRegEx('output');
 			var wireName = outputRegex.exec(lines[i])[1];
 			if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
-				outputs [wireName] = new Wire();
+				outputs [wireName] = new wire();
 				console.log('Captured output: ' + wireName);
 			}else{
 				console.log('Parsing error, duplicate declaration ' + wireName);
@@ -220,7 +220,7 @@ function parse(content){ //Netlist parsing function.
 				for(j = busLSB; j <= busMSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
-						outputs [wireName] = new Wire();
+						outputs [wireName] = new wire();
 						console.log('Captured output: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
@@ -232,7 +232,7 @@ function parse(content){ //Netlist parsing function.
 				for(j = busMSB; j <= busLSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
-						outputs [wireName] = new Wire();
+						outputs [wireName] = new wire();
 						console.log('Captured output: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
