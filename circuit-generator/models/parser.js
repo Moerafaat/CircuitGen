@@ -1,3 +1,5 @@
+/*Netlist Parser Model*/
+
 var Component = require('./component');
 var wire = Component.wire;
 var and = Component.and;
@@ -6,9 +8,11 @@ var or =Component.or;
 var nor = Component.nor;
 var xor = Component.xor;
 var not = Component.not;
+var inputPort = Component.input;
+var outputPort = Component.output;
+var WireType = Component.WireType;
 
 function getGatesRegEx(){
-	//return new RegExp('^\\s*(' + 'AND' + ')(\\d+)X(\\d+)\\s+(\\w+)\\s*\\(([\\(\\[\\)\\],\\s\\.\\w\\r\\n\\)]*)\\)\\s*$', 'gm');
 	var gates = "";
 	var models = [];
 	for(model in Component.EDIF){
@@ -34,7 +38,6 @@ function getParamRegEx(){
 	return new RegExp('^\\s*\\.(\\w)\\((.*)\\)\\s*$', 'gm');
 }
 
-//
 
 
 module.exports.parse = function parse(content){ //Netlist parsing function.
@@ -58,8 +61,8 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 	}
 	content = content.replace(endmoduleRegex, ''); //Removing 'endmodule'.
 	var moduleName = moduleRegex.exec(content)[1];
-	console.log('Module name: ');
-	console.log(moduleName);
+	//console.log('Module name: ');
+	//console.log(moduleName);
 
 	content = content.replace(moduleRegex, ''); //Removing module name.
 	var lines = content.split(';'); //Splitting data to instructions.
@@ -85,7 +88,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 			var wireName = wireRegex.exec(lines[i])[1];
 			if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
 				wires [wireName] = new wire();
-				console.log('Captured wire: ' + wireName);
+				//console.log('Captured wire: ' + wireName);
 			}else{
 				console.log('Parsing error, duplicate declaration ' + wireName);
 				console.log(i + ' ' + lines[i]);
@@ -105,7 +108,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 					var wireName = busName + '[' + j + ']';
 					if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
 						wires [wireName] = new wire();
-						console.log('Captured wire: ' + wireName);
+						//console.log('Captured wire: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
@@ -117,7 +120,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 					var wireName = busName + '[' + j + ']';
 					if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
 						wires [wireName] = new wire();
-						console.log('Captured wire: ' + wireName);
+						//console.log('Captured wire: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
@@ -130,8 +133,11 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 			var inputRegex = getWireRegEx('input');
 			var wireName = inputRegex.exec(lines[i])[1];
 			if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
-				inputs [wireName] = new wire();
-				console.log('Captured input: ' + wireName);
+				var newInput = new inputPort();
+				inputs [wireName] = new wire(WireType.INPUT, newInput.id);
+				newInput.addOutput(inputs[wireName].id);
+				gates.push(newInput);
+				//console.log('Captured input: ' + wireName);
 			}else{
 				console.log('Parsing error, duplicate declaration ' + wireName);
 				console.log(i + ' ' + lines[i]);
@@ -150,8 +156,11 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 				for(j = busLSB; j <= busMSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof inputs[wireName] === 'undefined'){ //Checking for double declaration.
-						inputs [wireName] = new wire();
-						console.log('Captured input: ' + wireName);
+						var newInput = new inputPort();
+						inputs [wireName] = new wire(WireType.INPUT, newInput.id);
+						newInput.addOutput(inputs[wireName].id);
+						gates.push(newInput);
+						//console.log('Captured input: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
@@ -162,8 +171,11 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 				for(j = busMSB; j <= busLSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof inputs[wireName] === 'undefined'){ //Checking for double declaration.
-						inputs [wireName] = new wire();
-						console.log('Captured wire: ' + wireName);
+						var newInput = new inputPort();
+						inputs [wireName] = new wire(WireType.INPUT, newInput.id);
+						newInput.addOutput(inputs[wireName].id);
+						gates.push(newInput);
+						//console.log('Captured wire: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
@@ -171,14 +183,17 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 					}
 				}
 			}
-			console.log('Input Bus [' + busMSB + ':' + busLSB + '] ' + busName);
+			//console.log('Input Bus [' + busMSB + ':' + busLSB + '] ' + busName);
 
 		}else if (outputRegex.test(lines[i])){ //Parsing output wire.
 			var outputRegex = getWireRegEx('output');
 			var wireName = outputRegex.exec(lines[i])[1];
 			if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
-				outputs [wireName] = new wire();
-				console.log('Captured output: ' + wireName);
+					var newOutput = new outputPort();
+					outputs [wireName] = new wire(WireType.OUTPUT, newOutput.id);
+					newOutput.addInput(outputs[wireName].id);
+					gates.push(newOutput);
+				//console.log('Captured output: ' + wireName);
 			}else{
 				console.log('Parsing error, duplicate declaration ' + wireName);
 				console.log(i + ' ' + lines[i]);
@@ -197,8 +212,10 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 				for(j = busLSB; j <= busMSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
-						outputs [wireName] = new wire();
-						console.log('Captured output: ' + wireName);
+						var newOutput = new outputPort();
+						outputs [wireName] = new wire(WireType.OUTPUT, newOutput.id);
+						newOutput.addInput(outputs[wireName].id);
+						gates.push(newOutput);						//console.log('Captured output: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
@@ -209,8 +226,11 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 				for(j = busMSB; j <= busLSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
-						outputs [wireName] = new wire();
-						console.log('Captured output: ' + wireName);
+						var newOutput = new outputPort();
+						outputs [wireName] = new wire(WireType.OUTPUT, newOutput.id);
+						newOutput.addInput(outputs[wireName].id);
+						gates.push(newOutput);
+							//console.log('Captured output: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
@@ -218,7 +238,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 					}
 				}
 			}
-			console.log('Output Bus [' + busMSB + ':' + busLSB + '] ' + busName);
+			//console.log('Output Bus [' + busMSB + ':' + busLSB + '] ' + busName);
 		}else if (gatesRegex.test(lines[i])){ //Parsing modules.
 			var moduleInstance = lines[i];
 			moduleInstance = moduleInstance.trim().replace(/\r\n/g, '').trim(); //Stripping module.
@@ -244,7 +264,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 			}
 
 			var newGate = new Component[EDIFModel.primitive](instanceModel);
-			console.log(moduleInstance);
+			//console.log(moduleInstance);
 			for (var p = 0; p < connectionTokens.length; p++) { //Establishing connections.
 				var paramRegex = getParamRegEx();
 				var matchedTokens = paramRegex.exec(connectionTokens[p]);
@@ -290,41 +310,23 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 		}
 		
 	}
+	/*for(var i = 0; i < gates.length; i++){
+		console.log(i + ':  ' + gates[i].model  + '(' + gates[i].id + ') connections: ');
 
-	for(var l = 0; l < gates.length; l++){
-		//console.log(Component.Readable(gates[l], wiresConcat));
-		console.log(gates[l].toString());
-		console.log('Inputs: ');
-		for(var i = 0; i < gates[l].inputs.length; i++){
-			var w = gates[l].inputs[i];
-			for(key in wires){
-				if(typeof wires[key] !== 'undefined')
-					if(wires[key].id == w)
-						console.log(key);
-			}
-			for(key in inputs){
-				if(typeof inputs[key] !== 'undefined')
-					if(inputs[key].id == w)
-						console.log(key);
-			}
-		}
-		console.log('Outputs: ');
-		for(var i = 0; i < gates[l].outputs.length; i++){
-			var w = gates[l].outputs[i];
-			for(key in wires){
-				if(typeof wires[key] !== 'undefined')
-					if(wires[key].id == w)
-						console.log(key);
-			}
-			for(key in outputs){
-				if(typeof outputs[key] !== 'undefined')
-					if(outputs[key].id == w)
-						console.log(key);
-			}
-		}
+		var gateInputs = gates[i].inputs;
+		if (typeof gateInputs === 'undefined' || gateInputs.length == 0)
+			continue;
+		for(var j = 0; j < gateInputs.length; j++)
+			console.log('Input: ' + gates[i].getInputGate(j).toString());
 
-		console.log('--------');
-	}
-	//console.log(wires);
+		var gateOutputs = gates[i].outputs;
+		if (typeof gateOutputs === 'undefined' || gateOutputs.length == 0)
+			continue;
+		for(var j = 0; j < gateOutputs.length; j++){
+			console.log('Outputs(' + j + '): ' + gates[i].getOutputGates(j).toString());
+		}
+		console.log('**********');
+	}*/
+
 	return 0;
 }

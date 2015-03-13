@@ -11,9 +11,19 @@ var Type = {
 	XOR: 4,
 	NOT: 5,
 	WIRE: 6,
-	BUS: 7
+	BUS: 7,
+	INPORT: 8,
+	OUTPORT: 9
 };
 module.exports.Type = Type;
+
+var WireType = {
+	INPUT: 0,
+	OUTPUT: 1,
+	CONNECTION: 2
+};
+
+module.exports.WireType = WireType;
 
 function getGateName(gate){
 	var name;
@@ -42,6 +52,12 @@ function getGateName(gate){
 		case Type.BUS:
 			name = 'bus';
 			break;
+		case Type.INPORT:
+			name = 'input port';
+			break;
+		case Type.OUTPORT:
+			name = 'output port';
+			break;
 		default:
 			name = 'unknown';
 	}
@@ -49,12 +65,27 @@ function getGateName(gate){
 }
 module.exports.getGateName = getGateName;
 
+function getWireTypeName(wire){
+	switch(wire.type){
+		case WireType.INPUT:
+			return 'input';
+		case WireType.OUTPUT:
+			return 'output';
+		case WireType.CONNECTION:
+			return 'connection';
+		default:
+			return 'unknown';
+	}
+
+}
+module.exports.getGateName = getGateName;
+
 var Component = function(inputs, outputs){ //Component base model.
 	this.id = shortId.generate(); //Component ID.
 
 	this.inputs = []; //Inputs array.
-	if(typeof input !== 'undefined'){
-		this.inputs = this.inputs.concat(inpur); 
+	if(typeof inputs !== 'undefined'){
+		this.inputs = this.inputs.concat(inputs); 
 	}
 	this.outputs = []; //Outputs array.
 	if(typeof outputs !== 'undefined')
@@ -63,11 +94,13 @@ var Component = function(inputs, outputs){ //Component base model.
 	this.x = -1; //Vertical level.
 	this.y = -1; //Horizontal level.
 
-	this.addInput = function(input){
-		if(typeof input === 'undefined')
+	this.addInput = function(inputPort){
+		if(typeof inputPort === 'undefined')
 			return;
-		else if (this.inputs.indexOf(input) == -1)
-			this.inputs = this.inputs.concat(input);
+		else if (this.inputs.indexOf(inputPort) == -1){
+			this.inputs = this.inputs.concat(inputPort);
+			this.addGate(this);
+		}
 		else
 			console.log('Connection: ' + input + ' already exists');
 	};
@@ -75,15 +108,81 @@ var Component = function(inputs, outputs){ //Component base model.
 	this.addOutput = function(output){
 		if(typeof output === 'undefined')
 			return;
-		else if (this.outputs.indexOf(output) == -1)
+		else if (this.outputs.indexOf(output) == -1){
 			this.outputs = this.outputs.concat(output);
-		else
+			this.addGate(this);
+		}else
 			console.log('Connection: ' + output + ' already exists');
 	};
 }
 
+
 Component.prototype.toString = function(){
 	return getGateName(this) + "(" + this.id + "), inputs: [" + this.inputs + "], outputs: [" + this.outputs + "], model: " + this.model; 
+};
+
+Component.gates = {};
+
+Component.wires = {};
+
+Component.prototype.removeWires = function(){
+	Component.wires = {};
+};
+
+
+Component.prototype.addGate = function(gate){
+	if (typeof gate === 'undefined')
+		return;
+	Component.gates[gate.id] = gate;
+};
+
+Component.prototype.removeGate = function(gate){
+	if (typeof gate === 'undefined')
+		return;
+	delete Component.gates[gate.id];
+}
+
+Component.prototype.clearGates = function(){
+	Component.gates = {};
+}
+
+Component.prototype.clearAll = function(){
+	Component.gates = {};
+	Component.wires = {};
+}
+
+Component.prototype.printGates = function(){
+	for(key in Component.gates){
+		console.log('gate: ' + Component.gates[key].toString());
+	}
+}
+
+Component.prototype.printWires = function(){
+	for(key in Component.wires){
+		console.log('wire: ' + Component.wires[key].toString());
+	}
+}
+
+Component.prototype.getInputGate = function(index){
+	if (typeof(this.inputs) === 'undefined' || index >= this.inputs.length || this.type == Type.INPUT)
+		return {'index': index};
+	else{
+		var inputWire = Component.wires[this.inputs[index]];
+		return Component.gates[inputWire.inPort];
+	}
+}
+
+Component.prototype.getOutputGates = function(index){
+	if (typeof(this.outputs) === 'undefined' || index >= this.outputs.length || this.type == Type.OUTPUT)
+		return [];
+	else{
+		var returnGates = [];
+		var outputWire = Component.wires[this.outputs[index]];
+		var outputPorts = outputWire.outPorts;
+		for(var i = 0; i < outputPorts.length; i++)
+			returnGates.push(Component.gates[outputPorts[i]]);
+		return returnGates;;
+	}
 }
 
 
@@ -93,6 +192,7 @@ function and(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
 	this.type = Type.AND;
 	this.model = model;
+	this.addGate(this);
 }
 
 nand.prototype = new Component(); //Nand gate model.
@@ -101,6 +201,7 @@ function nand(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
 	this.type = Type.NAND;
 	this.model = model;
+	this.addGate(this);
 }
 
 or.prototype = new Component();	//Or gate model.
@@ -109,6 +210,7 @@ function or(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
 	this.type = Type.OR;
 	this.model = model;
+	this.addGate(this);
 }
 
 nor.prototype = new Component(); //Nor gate model.
@@ -117,6 +219,7 @@ function nor(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
 	this.type = Type.NOR;
 	this.model = model;
+	this.addGate(this);
 }
 
 xor.prototype = new Component();  //Xor gate model.
@@ -125,6 +228,7 @@ function xor(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
 	this.type = Type.XOR;
 	this.model = model;
+	this.addGate(this);
 }
 
 not.prototype = new Component(); //Not gate model.
@@ -133,7 +237,28 @@ function not(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
 	this.type = Type.NOT;
 	this.model = model;
+	this.addGate(this);
 }
+
+input.prototype = new Component(); //Input model
+input.prototype.constructor = input;
+function input(inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.INPORT;
+	this.addGate(this);
+	this.model = 'Input Port';
+}
+
+output.prototype = new Component(); //Input model
+output.prototype.constructor = output;
+function output(inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.OUPORT;
+	this.addGate(this);
+	this.model = 'Output Port';
+}
+
+
 
 
 
@@ -143,29 +268,64 @@ module.exports.or = or;
 module.exports.nor = nor;
 module.exports.xor = xor;
 module.exports.not = not;
+module.exports.input = input;
+module.exports.output = output;
 
+module.exports.component = Component;
 
-
-
-module.exports.wire = function (input, outputs){
+function wire(wireType, input, outputs){
 	this.id = shortId.generate(); //Component ID.
 	this.type = Type.WIRE; //Component type.
-	this.inPort = input; //Input port.
+	if (typeof input === 'undefined')
+		this.inPort = ''
+	else
+		this.inPort = input; //Input port.
 	this.outPorts = []; //Output port.
 	if(typeof outputs !== 'undefined')
 		this.outPorts = this.outPorts.concat(outputs); 
 	this.x = -1; //Vertical level.
 	this.y = -1; //Horizontal level.
+	Component.wires[this.id] = this;
+
+	if (typeof wireType === 'undefined')
+		this.type = WireType.CONNECTION;
+	else
+		this.type = wireType;
+
 	this.setInput = function(input){
 		this.inPort = input;
+		Component.wires[this.id] = this;
 	};
 	this.addOutput = function(output){
 		if(typeof output === 'undefined')
 			return;
-		else if (this.outPorts.indexOf(output) == -1)
+		else if (this.outPorts.indexOf(output) == -1){
 			this.outPorts = this.outPorts.concat(output);
+			Component.wires[this.id] = this;
+		}
 	};
 };
+
+wire.prototype.toString = function(){
+	var printString = 'Wire(' + this.id + '):';
+	if (this.type == WireType.INPUT)
+		printString = printString + ' -input wire- ' + ', outputs: [' + this.outPorts + ']';
+	else if (this.type == WireType.OUTPUT)
+		printString = printString + ' -output wire- ' + ', input: [' + this.inPort + ']';
+	else if (this.type == WireType.CONNECTION)
+		printString = printString + ' -connection wire- input[' + this.inPort + '], outputs: [' + this.outPorts + ']';
+	else printString = printString + ' UNKOWN CONNECTION TYPE';
+		return printString;
+}
+
+wire.prototype.isFlyingWire = function(){
+	return (this.type == WireType.UNKOWN
+			|| (this.type == WireType.OUTPUT && (typeof(this.inPort) === 'undefined' || this.inPort == ''))
+			|| (this.type == WireType.INPUT && (typeof(this.outPorts) === 'undefined' || this.outPorts.length == 0))
+			|| (this.type == WireType.CONNECTION && (typeof(this.inPort) === 'undefined' || this.inPort == '' || typeof(this.outPorts) === 'undefined' || this.outPorts.length == 0)));
+}
+
+module.exports.wire = wire;
 
 
 module.exports.Readable = function(component, wires){
