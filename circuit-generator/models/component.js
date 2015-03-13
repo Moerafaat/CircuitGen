@@ -15,6 +15,135 @@ var Type = {
 };
 module.exports.Type = Type;
 
+function getGateName(gate){
+	var name;
+	switch(gate.type){
+		case Type.AND:
+			name = 'and';
+			break;
+		case Type.OR:
+			name = 'or';
+			break;
+		case Type.NAND:
+			name = 'nand';
+			break;
+		case Type.NOR:
+			name = 'nor';
+			break;
+		case Type.XOR:
+			name = 'xor';
+			break;
+		case Type.NOT:
+			name = 'not';
+			break;
+		case Type.WIRE:
+			name = 'wire';
+			break;
+		case Type.BUS:
+			name = 'bus';
+			break;
+		default:
+			name = 'unknown';
+	}
+	return name;
+}
+module.exports.getGateName = getGateName;
+
+var Component = function(inputs, outputs){ //Component base model.
+	this.id = shortId.generate(); //Component ID.
+
+	this.inputs = []; //Inputs array.
+	if(typeof input !== 'undefined'){
+		this.inputs = this.inputs.concat(inpur); 
+	}
+	this.outputs = []; //Outputs array.
+	if(typeof outputs !== 'undefined')
+		this.outputs = this.outputs.concat(outputs); 
+
+	this.x = -1; //Vertical level.
+	this.y = -1; //Horizontal level.
+
+	this.addInput = function(input){
+		if(typeof input === 'undefined')
+			return;
+		else if (this.inputs.indexOf(input) == -1)
+			this.inputs = this.inputs.concat(input);
+		else
+			console.log('Connection: ' + input + ' already exists');
+	};
+
+	this.addOutput = function(output){
+		if(typeof output === 'undefined')
+			return;
+		else if (this.outputs.indexOf(output) == -1)
+			this.outputs = this.outputs.concat(output);
+		else
+			console.log('Connection: ' + output + ' already exists');
+	};
+}
+
+Component.prototype.toString = function(){
+	return getGateName(this) + "(" + this.id + "), inputs: [" + this.inputs + "], outputs: [" + this.outputs + "], model: " + this.model; 
+}
+
+
+and.prototype = new Component(); //And gate model.
+and.prototype.constructor = and;
+function and(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.AND;
+	this.model = model;
+}
+
+nand.prototype = new Component(); //Nand gate model.
+nand.prototype.constructor = nand;
+function nand(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.NAND;
+	this.model = model;
+}
+
+or.prototype = new Component();	//Or gate model.
+or.prototype.constructor = or;
+function or(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.OR;
+	this.model = model;
+}
+
+nor.prototype = new Component(); //Nor gate model.
+nor.prototype.constructor = nor;
+function nor(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.NOR;
+	this.model = model;
+}
+
+xor.prototype = new Component();  //Xor gate model.
+xor.prototype.constructor = xor;
+function xor(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.XOR;
+	this.model = model;
+}
+
+not.prototype = new Component(); //Not gate model.
+not.prototype.constructor = not;
+function not(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.NOT;
+	this.model = model;
+}
+
+
+
+module.exports.and = and;
+module.exports.nand = nand;
+module.exports.or = or;
+module.exports.nor = nor;
+module.exports.xor = xor;
+module.exports.not = not;
+
 
 
 
@@ -38,47 +167,6 @@ module.exports.wire = function (input, outputs){
 	};
 };
 
-/*module.exports.Bus = function (inputs, outputs){
-	this.id = shortId.generate(); //Component ID.
-	this.type = Type.BUS; //Component type.
-	this.inputs = inputs; //Inputs array.
-	this.outputs = outputs; //Outputs array.
-	this.x = -1; //Vertical level.
-	this.y = -1; //Horizontal level.
-};*/
-function getGateName(gate){
-	var name;
-	switch(gate.type){
-		case Type.AND:
-			name = 'And';
-			break;
-		case Type.OR:
-			name = 'Or';
-			break;
-		case Type.NAND:
-			name = 'Nand';
-			break;
-		case Type.NOR:
-			name = 'Nor';
-			break;
-		case Type.XOR:
-			name = 'Xor';
-			break;
-		case Type.NOT:
-			name = 'Not';
-			break;
-		case Type.WIRE:
-			name = 'Wire';
-			break;
-		case Type.BUS:
-			name = 'Bus';
-			break;
-		default:
-			name = 'Unknown';
-	}
-	return name;
-}
-module.exports.getGateName = getGateName;
 
 module.exports.Readable = function(component, wires){
 	var name = getGateName(component);
@@ -104,178 +192,6 @@ module.exports.Readable = function(component, wires){
 };
 
 
-module.exports.and = function (model, input, outputs){
-	this.id = shortId.generate(); //Component ID.
-	this.type = Type.AND; //Component type.
-	this.inputs = []; //Inputs array.
-	if(typeof input !== 'undefined'){
-		this.inputs = this.inputs.concat(inpur); 
-	}
-	this.outputs = []; //Outputs array.
-	if(typeof outputs !== 'undefined')
-		this.outputs = this.outputs.concat(outputs); 
-	this.x = -1; //Vertical level.
-	this.y = -1; //Horizontal level.
-	this.model = model;
-
-	this.addInput = function(input){
-		if(typeof input === 'undefined')
-			return;
-		else if (this.inputs.indexOf(input) == -1)
-			this.inputs = this.inputs.concat(input);
-		else
-			console.log('Connection: ' + input + ' already exists');
-	};
-
-	this.addOutput = function(output){
-		if(typeof output === 'undefined')
-			return;
-		else if (this.outputs.indexOf(output) == -1)
-			this.outputs = this.outputs.concat(output);
-		else
-			console.log('Connection: ' + output + ' already exists');
-	};
-};
-
-module.exports.or = function (model, inputs, outputs){
-	this.id = shortId.generate();
-	this.type = Type.OR;
-	this.inputs = []; //Inputs array.
-	if(typeof inputs !== 'undefined')
-		this.inputs = this.inputs.concat(inputs); 
-	this.outputs = []; //Outputs array.
-	if(typeof outputs !== 'undefined')
-		this.outputs = this.outputs.concat(outputs); 
-	this.x = -1; //Vertical level.
-	this.y = -1; //Horizontal level.
-	this.model = model;
-
-	this.addInput = function(input){
-		if(typeof input === 'undefined')
-			return;
-		else if (this.inputs.indexOf(input) == -1)
-			this.inputs = this.inputs.concat(input);
-	};
-
-	this.addOutput = function(output){
-		if(typeof output === 'undefined')
-			return;
-		else if (this.outputs.indexOf(output) == -1)
-			this.outputs = this.outputs.concat(output);
-	};
-};
-
-module.exports.nand = function (model, inputs, outputs){
-	this.id = shortId.generate();
-	this.type = Type.NAND;
-	this.inputs = []; //Inputs array.
-	if(typeof inputs !== 'undefined')
-		this.inputs = this.inputs.concat(inputs); 
-	this.outputs = []; //Outputs array.
-	if(typeof outputs !== 'undefined')
-		this.outputs = this.outputs.concat(outputs); 
-	this.x = -1; //Vertical level.
-	this.y = -1; //Horizontal level.
-	this.model = model;
-
-	this.addInput = function(input){
-		if(typeof input === 'undefined')
-			return;
-		else if (this.inputs.indexOf(input) == -1)
-			this.inputs = this.inputs.concat(input);
-	};
-
-	this.addOutput = function(output){
-		if(typeof output === 'undefined')
-			return;
-		else if (this.outputs.indexOf(output) == -1)
-			this.outputs = this.outputs.concat(output);
-	};
-};
-
-module.exports.nor = function (model, inputs, outputs){
-	this.id = shortId.generate();
-	this.type = Type.NOR;
-	this.inputs = []; //Inputs array.
-	if(typeof inputs !== 'undefined')
-		this.inputs = this.inputs.concat(inputs); 
-	this.outputs = []; //Outputs array.
-	if(typeof outputs !== 'undefined')
-		this.outputs = this.outputs.concat(outputs); 
-	this.x = -1; //Vertical level.
-	this.y = -1; //Horizontal level.
-	this.model = model;
-
-	this.addInput = function(input){
-		if(typeof input === 'undefined')
-			return;
-		else if (this.inputs.indexOf(input) == -1)
-			this.inputs = this.inputs.concat(input);
-	};
-
-	this.addOutput = function(output){
-		if(typeof output === 'undefined')
-			return;
-		else if (this.outputs.indexOf(output) == -1)
-			this.outputs = this.outputs.concat(output);
-	};
-};
-
-module.exports.xor = function (model, inputs, outputs){
-	this.id = shortId.generate();
-	this.type = Type.XOR;
-	this.inputs = []; //Inputs array.
-	if(typeof inputs !== 'undefined')
-		this.inputs = this.inputs.concat(inputs); 
-	this.outputs = []; //Outputs array.
-	if(typeof outputs !== 'undefined')
-		this.outputs = this.outputs.concat(outputs); 
-	this.x = -1; //Vertical level.
-	this.y = -1; //Horizontal level.
-	this.model = model;
-
-	this.addInput = function(input){
-		if(typeof input === 'undefined')
-			return;
-		else if (this.inputs.indexOf(input) == -1)
-			this.inputs = this.inputs.concat(input);
-	};
-
-	this.addOutput = function(output){
-		if(typeof output === 'undefined')
-			return;
-		else if (this.outputs.indexOf(output) == -1)
-			this.outputs = this.outputs.concat(output);
-	};
-};
-
-module.exports.not = function (model, inputs, outputs){
-	this.id = shortId.generate();
-	this.type = Type.NOT;
-	this.inputs = []; //Inputs array.
-	if(typeof inputs !== 'undefined')
-		this.inputs = this.inputs.concat(inputs); 
-	this.outputs = []; //Outputs array.
-	if(typeof outputs !== 'undefined')
-		this.outputs = this.outputs.concat(outputs); 
-	this.x = -1; //Vertical level.
-	this.y = -1; //Horizontal level.
-	this.model = model;
-
-	this.addInput = function(input){
-		if(typeof input === 'undefined')
-			return;
-		else if (this.inputs.indexOf(input) == -1)
-			this.inputs = this.inputs.concat(input);
-	};
-
-	this.addOutput = function(output){
-		if(typeof output === 'undefined')
-			return;
-		else if (this.outputs.indexOf(output) == -1)
-			this.outputs = this.outputs.concat(output);
-	};
-};
 
 module.exports.EDIF = {
 	AND2X1: {

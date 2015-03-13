@@ -293,7 +293,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 
 	for(var l = 0; l < gates.length; l++){
 		//console.log(Component.Readable(gates[l], wiresConcat));
-		console.log(Component.getGateName(gates[l]) + ': '  + JSON.stringify(gates[l]));
+		console.log(gates[l].toString());
 		console.log('Inputs: ');
 		for(var i = 0; i < gates[l].inputs.length; i++){
 			var w = gates[l].inputs[i];
