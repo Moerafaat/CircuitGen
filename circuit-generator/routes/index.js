@@ -41,7 +41,8 @@ router.get('/parse', function(req, res){ //Netlist upload view.
 });
 
 router.get('/generate', function(req, res){ //Circuit generation upload view.
-	res.render('joint_test');
+	
+	res.render('joint_test', {graphGates: JSON.stringify([{'a':'b'}]), graphWires: JSON.stringify([{'c':'d'}])});
 });
 
 router.post('/parse', function(req, res){ //Netlist file parser.

@@ -1,36 +1,39 @@
-var graph = new joint.dia.Graph;
+graph = new joint.dia.Graph;
 
-var paper = new joint.dia.Paper({
+paper = new joint.dia.Paper({
+        el: $('#paper'),
+        model: graph,
+        width: 1000,
+        height: 600,
+        gridSize: 5,
+        snapLinks: false,
+        interactive: false,
+        defaultLink: new joint.shapes.logic.Wire,
 
-    el: $('#paper'), model: graph,
-    width: 1000, height: 600, gridSize: 5,
-    snapLinks: true,
-    defaultLink: new joint.shapes.logic.Wire,
+        validateConnection: function(vs, ms, vt, mt, e, vl){
+            if (e === 'target') {
 
-    validateConnection: function(vs, ms, vt, mt, e, vl) {
+                // target requires an input port to connect
+                if (!mt || !mt.getAttribute('class') || mt.getAttribute('class').indexOf('input') < 0) return false;
 
-        if (e === 'target') {
+                // check whether the port is being already used
+                var portUsed = _.find(this.model.getLinks(), function(link) {
 
-            // target requires an input port to connect
-            if (!mt || !mt.getAttribute('class') || mt.getAttribute('class').indexOf('input') < 0) return false;
-
-            // check whether the port is being already used
-            var portUsed = _.find(this.model.getLinks(), function(link) {
-
-                return (link.id !== vl.model.id &&
+                    return (link.id !== vl.model.id &&
                         link.get('target').id === vt.model.id &&
                         link.get('target').port === mt.getAttribute('port')); 
-            });
+                });
 
-            return !portUsed;
+                return !portUsed;
 
-        } else { // e === 'source'
+            } else { // e === 'source'
 
-            // source requires an output port to connect
-            return ms && ms.getAttribute('class') && ms.getAttribute('class').indexOf('output') >= 0; 
-        }
-    }
-});
+                // source requires an output port to connect
+                return ms && ms.getAttribute('class') && ms.getAttribute('class').indexOf('output') >= 0; 
+            }
+        },
+        validateMagnet: function(cellView, magnet){console.log(cellView); console.log(magnet); return false;}
+    });
 
 // zoom the viewport by 50%
 paper.scale(1.5,1.5);
@@ -74,7 +77,7 @@ joint.shapes.logic.Repeater.prototype.onSignal = function(signal, handler) { _.d
 joint.shapes.logic.Output.prototype.onSignal = function(signal) { toggleLive(this, signal); }
 
 // diagramm setup
-var gates = {
+gates = {
     repeater: new joint.shapes.logic.Repeater({ position: { x: 350, y: 50 }}),
     or: new joint.shapes.logic.Or({ position: { x: 550, y: 50 }}),
     and: new joint.shapes.logic.And({ position: { x: 550, y: 150 }}),
@@ -98,8 +101,6 @@ var wires = [
 ];
 
 // add gates and wires to the graph
-graph.addCells(_.toArray(gates));
-_.each(wires, function(attributes) { graph.addCell(new joint.shapes.logic.Wire(attributes)) });
 
 graph.on('change:source change:target', function(model, end) {
 
@@ -140,5 +141,3 @@ graph.on('change:signal', function(wire, signal) {
    }
 });
 
-// initialize signal and keep its value
-var current = initializeSignal();
