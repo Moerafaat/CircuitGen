@@ -105,11 +105,11 @@ var Component = function(inputs, outputs){ //Component base model.
 			console.log('Connection: ' + input + ' already exists');
 	};
 
-	this.addOutput = function(output){
-		if(typeof output === 'undefined')
+	this.addOutput = function(outputPort){
+		if(typeof outputPort === 'undefined')
 			return;
-		else if (this.outputs.indexOf(output) == -1){
-			this.outputs = this.outputs.concat(output);
+		else if (this.outputs.indexOf(outputPort) == -1){
+			this.outputs = this.outputs.concat(outputPort);
 			this.addGate(this);
 		}else
 			console.log('Connection: ' + output + ' already exists');
