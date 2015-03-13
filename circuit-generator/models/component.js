@@ -292,15 +292,18 @@ function wire(wireType, input, outputs){
 	else
 		this.type = wireType;
 
-	this.setInput = function(input){
-		this.inPort = input;
+	this.setInput = function(inputPort){
+		if (typeof(inputPort) === 'undefined')
+			this.inPort = '';
+		else
+			this.inPort = inputPort;
 		Component.wires[this.id] = this;
 	};
-	this.addOutput = function(output){
-		if(typeof output === 'undefined')
+	this.addOutput = function(outputPort){
+		if(typeof outputPort === 'undefined')
 			return;
-		else if (this.outPorts.indexOf(output) == -1){
-			this.outPorts = this.outPorts.concat(output);
+		else if (this.outPorts.indexOf(outputPort) == -1){
+			this.outPorts = this.outPorts.concat(outputPort);
 			Component.wires[this.id] = this;
 		}
 	};
