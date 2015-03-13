@@ -4,17 +4,17 @@
 ####Project Description:
 This projects aims at desiging a web tool to analyze logic circuit, adjust the layout and graph it.
 
-####Framework and libraries:
+####Frameworks and libraries:
 * Node.js web framework.
 * Express.js web application framework.
 * Joint.js graphing library.
 * AlloyUI front-end framework.
 
-####Implementaion Plan:
+####Implementation Plan:
 * File processing (*Complete*).
 * Netlist parsing (*Complete*).
 * Establishing components objects and connections(*Complete*).
 * Topological sorting and placement level analysis for each component(*Under research*).
 * UI design using AlloyUI.
 * Circuit graphing using Joint.js(*Complete*).
-* Customizing netlist parsing using EDIF files (*not guaranteed in the given timeframe, infrastructure ready*).
+* Customizing netlist parsing using EDIF file (*not guaranteed in the given timeframe, infrastructure ready*).
