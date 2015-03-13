@@ -30,22 +30,11 @@ function getKey(object, value){
     }
 }
 
-
-
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
-
-router.get('/parse', function(req, res){ //Netlist upload view.
+router.get('/', function(req, res){ //Netlist upload view.
 	res.render('parser_test');
 });
 
-router.get('/generate', function(req, res){ //Circuit generation upload view.
-	
-	res.render('joint_test', {graphGates: JSON.stringify([{'a':'b'}]), graphWires: JSON.stringify([{'c':'d'}])});
-});
-
-router.post('/parse', function(req, res){ //Netlist file parser.
+router.post('/circuit', function(req, res){ //Netlist file parser.
 	//console.log(req.files.netlist);
 	var filePath = './' + req.files.netlist.path; //Full file path.
 	var content; //File content holder.
@@ -56,9 +45,36 @@ router.post('/parse', function(req, res){ //Netlist file parser.
 	        fs.unlink(filePath); //Deleting uploaded file.
 	    }else{
 	    	content = data;
-	    	Parser.parse(content); //Parsing file content.
-			res.status(200).send(content);
-			fs.unlink(filePath); //Deleting processed file.
+	    	Parser.parse(content, function(err, gates, wires){
+	    		if(err){
+	    			console.log(err);
+	    			res.status(500).send(err);
+	    			fs.unlink(filePath); //Deleting processed file.
+	    		}else{
+
+	    			var graphMapper = { //Mapping gates to logic digarams.
+	    					AND2X1: 'And',
+							AND2X2: 'And',
+							NAND2X1:'Nand',
+							NAND2X2: 'Nand',
+							OR2X1: 'Or',
+							OR2X2: 'Or',
+							NOR2X1: 'Nor',
+							NOR2X2: 'Nor',
+							XOR2X1: 'Xor',
+							XOR2X2: 'Xor',
+							INVX1: 'Not',
+							InputPort: 'Input',
+							OutputPort: 'Output'
+	    			};
+
+	    			res.render('circuit', {graphGates: JSON.stringify(gates), graphWires: JSON.stringify(wires), graphMapper: JSON.stringify(graphMapper)});
+	    			//res.status(200).send(content);
+	    			fs.unlink(filePath); //Deleting processed file.
+	    		}
+	    	}); //Parsing file content.
+			
+			
 	    }
 	    
 	});

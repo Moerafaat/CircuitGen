@@ -6,8 +6,8 @@ paper = new joint.dia.Paper({
         width: 1000,
         height: 600,
         gridSize: 5,
-        snapLinks: false,
-        interactive: false,
+        snapLinks: true,
+        interactive: true,
         defaultLink: new joint.shapes.logic.Wire,
 
         validateConnection: function(vs, ms, vt, mt, e, vl){
@@ -95,9 +95,7 @@ var wires = [
     { source: { id: gates.not.id, port: 'out' }, target: { id: gates.nor.id, port: 'in1' }},
     { source: { id: gates.nor.id, port: 'out' }, target: { id: gates.repeater.id, port: 'in' }},
     { source: { id: gates.nor.id, port: 'out' }, target: { id: gates.output.id, port: 'in' }},
-    { source: { id: gates.repeater.id, port: 'out' }, target: { id: gates.nor.id, port: 'in2'},
-      vertices: [{ x: 300, y: 220 }]
-    }
+    { source: { id: gates.repeater.id, port: 'out' }, target: { id: gates.nor.id, port: 'in2'}, vertices: [{ x: 300, y: 220 }]}
 ];
 
 // add gates and wires to the graph

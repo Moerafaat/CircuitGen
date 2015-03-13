@@ -40,7 +40,7 @@ function getParamRegEx(){
 
 
 
-module.exports.parse = function parse(content){ //Netlist parsing function.
+module.exports.parse = function parse(content, callback){ //Netlist parsing function.
 	var endmoduleRegex = /endmodule/g; //RegEx: Capturing 'endmodule'.
 	var commentRegex = /\/\/.*$/gm; //RegEx: Capturing comments RegEx.
 	var mCommentRegex = /\/\*(.|[\r\n])*?\*\//gm; //RegEx: Capturing multi-line comments RegEx.
@@ -57,7 +57,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 
 	if(endmoduleCount != 1 || moduleCount != 1){
 		console.log('Invalid input');
-		return -1;
+		return callback('Invalid input', null, null);
 	}
 	content = content.replace(endmoduleRegex, ''); //Removing 'endmodule'.
 	var moduleName = moduleRegex.exec(content)[1];
@@ -92,7 +92,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 			}else{
 				console.log('Parsing error, duplicate declaration ' + wireName);
 				console.log(i + ' ' + lines[i]);
-				return -1;
+				return callback('Parsing error, duplicate declaration', null, null);
 			}
 		}else if (busRegex.test(lines[i])){ //Parsing bus.
 			var busRegex = getBusRegEx('wire');
@@ -101,8 +101,8 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 			var busLSB = parseInt(bus[2]);
 			var busName = bus[3];
 			if(busLSB == busMSB){
-				console.log('Parsing error, invalid bus length ' + busMSB + ':' + busLSB);
-				return -1;
+				console.log('Parsing error, invalid bus length' + busMSB + ':' + busLSB);
+				return callback('Parsing error, invalid bus length' + busMSB + ':' + busLSB, null, null);
 			}else if (busLSB < busMSB){
 				for(j = busLSB; j <= busMSB; j++){
 					var wireName = busName + '[' + j + ']';
@@ -112,7 +112,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
-						return -1;
+						return callback('Parsing error, duplicate declaration '  + wireName , null, null);
 					}
 				}
 			}else if (busLSB > busMSB){
@@ -124,7 +124,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
-						return -1;
+						return callback('Parsing error, duplicate declaration ' + wireName, null, null);
 					}
 				}
 			}
@@ -141,7 +141,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 			}else{
 				console.log('Parsing error, duplicate declaration ' + wireName);
 				console.log(i + ' ' + lines[i]);
-				return -1;
+				return callback('Parsing error, duplicate declaration ' + wireName, null, null);
 			}
 		}else if (inputBusRegex.test(lines[i])){ //Parsing input bus.
 			var inputBusRegex =  getBusRegEx('input');
@@ -151,7 +151,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 			var busName = bus[3];
 			if(busLSB == busMSB){
 				console.log('Parsing error, invalid input bus length ' + busMSB + ':' + busLSB);
-				return -1;
+				return callback('Parsing error, invalid input bus length ' + busMSB + ':' + busLSB, null, null);
 			}else if (busLSB < busMSB){
 				for(j = busLSB; j <= busMSB; j++){
 					var wireName = busName + '[' + j + ']';
@@ -164,7 +164,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
-						return -1;
+						return callback('Parsing error, duplicate declaration ' + wireName, null, null);
 					}
 				}
 			}else if (busLSB > busMSB){
@@ -179,7 +179,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
-						return -1;
+						return callback('Parsing error, duplicate declaration ' + wireName, null, null);
 					}
 				}
 			}
@@ -190,14 +190,14 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 			var wireName = outputRegex.exec(lines[i])[1];
 			if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
 					var newOutput = new outputPort();
-					outputs [wireName] = new wire(WireType.OUTPUT, newOutput.id);
+					outputs [wireName] = new wire(WireType.OUTPUT,'',[newOutput.id]);
 					newOutput.addInput(outputs[wireName].id);
 					gates.push(newOutput);
 				//console.log('Captured output: ' + wireName);
 			}else{
 				console.log('Parsing error, duplicate declaration ' + wireName);
 				console.log(i + ' ' + lines[i]);
-				return -1;
+				return callback('Parsing error, duplicate declaration ' + wireName, null, null);
 			}
 		}else if (outputBusRegex.test(lines[i])){ //Parsing output bus.
 			var outputBusRegex =  getBusRegEx('output');
@@ -207,19 +207,19 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 			var busName = bus[3];
 			if(busLSB == busMSB){
 				console.log('Parsing error, invalid output bus length ' + busMSB + ':' + busLSB);
-				return -1;
+				return callback('Parsing error, invalid output bus length ' + busMSB + ':' + busLSB, null, null);
 			}else if (busLSB < busMSB){
 				for(j = busLSB; j <= busMSB; j++){
 					var wireName = busName + '[' + j + ']';
 					if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
 						var newOutput = new outputPort();
-						outputs [wireName] = new wire(WireType.OUTPUT, newOutput.id);
+						outputs [wireName] = new wire(WireType.OUTPUT, '', [newOutput.id]);
 						newOutput.addInput(outputs[wireName].id);
 						gates.push(newOutput);						//console.log('Captured output: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
-						return -1;
+						return callback('Parsing error, duplicate declaration ' + wireName, null, null);
 					}
 				}
 			}else if (busLSB > busMSB){
@@ -227,14 +227,14 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 					var wireName = busName + '[' + j + ']';
 					if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
 						var newOutput = new outputPort();
-						outputs [wireName] = new wire(WireType.OUTPUT, newOutput.id);
+						outputs [wireName] = new wire(WireType.OUTPUT, '', [newOutput.id]);
 						newOutput.addInput(outputs[wireName].id);
 						gates.push(newOutput);
 							//console.log('Captured output: ' + wireName);
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
-						return -1;
+						return callback('Parsing error, duplicate declaration ' + wireName, null, null);
 					}
 				}
 			}
@@ -260,7 +260,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 
 			if(typeof EDIFModel === 'undefined'){ //Checking the existence of the model in the library.
 				console.log('Unknown module ' + instanceModel);
-				return -1;
+				return callback('Unknown module ' + instanceMode, null, null);
 			}
 
 			var newGate = new Component[EDIFModel.primitive](instanceModel);
@@ -283,7 +283,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 						inputs[wireName].addOutput(newGate.id);
 					}else{
 						console.log('Undeclared wire ' + wireName); 
-						return -1;
+						return callback('Undeclared wire ' + wireName, null, null);
 					}
 				}else if (EDIFModel.outputPorts.indexOf(portName) != -1){ //Establishing output connection.
 					if (typeof wires[wireName] !== 'undefined'){
@@ -296,11 +296,11 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 						outputs[wireName].setInput(newGate.id);
 					}else{
 						console.log('Undeclared wire ' + wireName);
-						return -1;
+						return callback('Undeclared wire ' + wireName, null, null);
 					}
 				}else{
 					console.log('Undefined port ' + portName + ' for ' + EDIFModel.name);
-					return -1;
+					return callback('Undefined port ' + portName + ' for ' + EDIFModel.name, null, null);
 				}
 				
 			}
@@ -310,6 +310,7 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 		}
 		
 	}
+	
 	/*for(var i = 0; i < gates.length; i++){
 		console.log(i + ':  ' + gates[i].model  + '(' + gates[i].id + ') connections: ');
 
@@ -328,5 +329,17 @@ module.exports.parse = function parse(content){ //Netlist parsing function.
 		console.log('**********');
 	}*/
 
-	return 0;
+	var allWires = [];
+	for(key in wires)
+		allWires.push(wires[key]);
+	for(key in inputs)
+		allWires.push(inputs[key]);
+	for(key in outputs)
+		allWires.push(outputs[key]);
+	
+	for(i = 0; i < allWires.length; i++)
+		if (allWires[i].isFlyingWire())
+			console.log('Warning, flying wire '+ key);
+
+	return callback(null, gates, allWires);
 }

@@ -246,16 +246,16 @@ function input(inputs, outputs){
 	Component.apply(this, inputs, outputs);
 	this.type = Type.INPORT;
 	this.addGate(this);
-	this.model = 'Input Port';
+	this.model = 'InputPort';
 }
 
 output.prototype = new Component(); //Input model
 output.prototype.constructor = output;
 function output(inputs, outputs){
 	Component.apply(this, inputs, outputs);
-	this.type = Type.OUPORT;
+	this.type = Type.OUTPORT;
 	this.addGate(this);
-	this.model = 'Output Port';
+	this.model = 'OutputPort';
 }
 
 

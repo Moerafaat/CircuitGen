@@ -10,18 +10,9 @@
     <script src="/javascripts/joint.js"></script> 
     <script src="/javascripts/joint.shapes.logic.js"></script> 
     <script src="/javascripts/logic.js"></script>
+    <script src="/javascripts/visualizer.js"></script>
     <script type="text/javascript">
-    var current;
-    function plotGraph(gGates, gWires){
-        console.log(gGates);
-        console.log(gWires);
-        graph.addCells(_.toArray(gates));
-        _.each(wires, function(attributes) { graph.addCell(new joint.shapes.logic.Wire(attributes)) });
-
-        current = initializeSignal();
-        console.log(current);
-    };
-    plotGraph(JSON.parse('<%-graphGates%>'), JSON.parse('<%-graphWires%>')); 
+    plotGraph(JSON.parse('<%-graphGates%>'), JSON.parse('<%-graphWires%>'), JSON.parse('<%-graphMapper%>')); 
     </script>
     <style type="text/css">
             .tool-remove {
