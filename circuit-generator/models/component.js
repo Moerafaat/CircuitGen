@@ -151,6 +151,13 @@ Component.prototype.clearAll = function(){
 	Component.wires = {};
 }
 
+Component.prototype.equals = function(other){
+	return (typeof(other) === typeof(this)
+			&& this.hasOwnProperty('type') && other.hasOwnProperty('type')
+			&& (this.hasOwnProperty('id') && other.hasOwnProperty('id'))
+			&& (this.type == other.type) && (this.id == other.id));
+}
+
 Component.prototype.printGates = function(){
 	for(key in Component.gates){
 		console.log('gate: ' + Component.gates[key].toString());
