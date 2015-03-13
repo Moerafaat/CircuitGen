@@ -1,4 +1,4 @@
-var Component = require('../models/component');
+var Component = require('component');
 var wire = Component.wire;
 var and = Component.and;
 var nand = Component.nand;
