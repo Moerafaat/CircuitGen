@@ -34,6 +34,11 @@ router.get('/', function(req, res){ //Netlist upload view.
 	res.render('parser_test');
 });
 
+router.get('/ui', function(req, res){ //Netlist upload view.
+	res.render('index', {title: 'NCG'});
+});
+
+
 router.post('/circuit', function(req, res){ //Netlist file parser.
 	//console.log(req.files.netlist);
 	var filePath = './' + req.files.netlist.path; //Full file path.

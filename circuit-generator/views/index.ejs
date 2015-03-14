@@ -1,11 +1,74 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-  </body>
+<head>
+	<title><%= title %></title>
+	<link rel='stylesheet' href='/stylesheets/style.css' />
+	<script src="/javascripts/aui-min.js"></script>
+	<link rel="stylesheet" href="/javascripts/bootstrap.min.css">
+	    <script src="/javascripts/jquery-2.1.3.min.js"></script>
+	<script type="text/javascript">
+		function refreshView(){
+			if($('#stdcells-0').is(':checked')){
+				$('#upload-stdcell').hide();
+				$('#stdcells-0').prop('checked', true);
+				$('#stdcells-1').prop('checked', false); 
+			}else{
+				$('#upload-stdcell').show();
+				$('#stdcells-1').prop('checked', true);
+				$('#stdcells-0').prop('checked', false); 
+			}
+
+			
+		}
+		 $(document).ready(function(){
+		 	refreshView();
+		 	$('#stdcells-0').change(refreshView);
+		 	$('#stdcells-1').change(refreshView);
+		 });
+	</script>
+
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-6 col-md-offset-3">
+				<form id="form-netlist" action="/circuit" method="post" enctype="multipart/form-data">
+					<legend>Verilog Netlist File Upload</legend>
+					<div class="form-group">
+						<label class="control-label" for="netlist-btn">Netlist File:
+							<div class="controls">
+								<input name="netlist" id="netlist-btn" class="form-control field-required input-file" type="file">
+							</div>
+						</label>
+					</div>
+					<br/>
+					<div class="form-group">
+						<label class="control-label" for="stdcell-group">Standard Cells Library:</label>
+						<div id= "stdcell-group"> 
+							<label class="radio-inline" for="stdcells-0">
+								<input type="radio" name="stdcells" id="stdcells-0" value="default" checked="checked">
+								Default (osu035_stdcells)
+							</label> 
+							<label class="radio-inline" for="stdcells-1">
+								<input type="radio" name="stdcells" id="stdcells-1" value="custom">
+								Upload Custom Cells
+							</label>
+						</div>
+						<br/>
+						<label id="upload-stdcell" class="control-label" for="stdcell-btn" style = "display: none;">Standard Cell Library:
+							<div class="controls">
+								<input name="stdcell-btn" id="stdcell-btn" class="form-control field-required input-file" type="file">
+							</div>
+						</label>
+					</div>
+
+					<div class="btn-group btn-group-justified" role="group" style = "width: 100%;">
+						<input class="btn btn-info btn-lg" type="submit" value="Submit!" style = "width: 100%;">
+					</div>
+
+				</form>
+			</div>
+		</div>
+	</div>
+</body>
 </html>
