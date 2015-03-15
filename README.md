@@ -1,8 +1,9 @@
-##**Digital Designer Project 1: Digital Circuit Realizer**
+##**Digital Designer Project 1: Digital Circuit Realizer (master branch)**
 ###*By Ahmed A. Agiza and Mohammed R. Anany*
 
 ####Project Description:
 This projects aims at desiging a web tool to analyze logic circuit, adjust the layout and graph it.
+
 
 ####Frameworks and libraries:
 * Node.js web framework.
@@ -14,7 +15,7 @@ This projects aims at desiging a web tool to analyze logic circuit, adjust the l
 * File processing (*Complete*).
 * Netlist parsing (*Complete*).
 * Establishing components objects and connections(*Complete*).
-* Topological sorting and placement level analysis for each component(*Under research*).
-* UI design using AlloyUI.
+* Topological sorting and placement level analysis for each component (*In Progress*).
+* UI design using AlloyUI (*In Progress*).
 * Circuit graphing using Joint.js(*Complete*).
 * Customizing netlist parsing using EDIF file (*not guaranteed in the given timeframe, infrastructure ready*).
