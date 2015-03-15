@@ -82,6 +82,7 @@ module.exports.getGateName = getGateName;
 
 var Component = function(inputs, outputs){ //Component base model.
 	this.id = shortId.generate(); //Component ID.
+	this.dummy = false; // Needed for algorithm.
 
 	this.inputs = []; //Inputs array.
 	if(typeof inputs !== 'undefined'){
@@ -172,7 +173,7 @@ Component.prototype.printWires = function(){
 
 Component.prototype.getInputGate = function(index){
 	if (typeof(this.inputs) === 'undefined' || index >= this.inputs.length || this.type == Type.INPUT)
-		return {'index': index};
+		return {};
 	else{
 		var inputWire = Component.wires[this.inputs[index]];
 		return Component.gates[inputWire.inPort];
@@ -188,7 +189,7 @@ Component.prototype.getOutputGates = function(index){
 		var outputPorts = outputWire.outPorts;
 		for(var i = 0; i < outputPorts.length; i++)
 			returnGates.push(Component.gates[outputPorts[i]]);
-		return returnGates;;
+		return returnGates;
 	}
 }
 
