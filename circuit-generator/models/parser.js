@@ -330,16 +330,51 @@ module.exports.parse = function parse(content, callback){ //Netlist parsing func
 	}*/
 
 	var allWires = [];
-	for(key in wires)
+	for(key in wires){
+		//console.log(key + ' : ' + wires[key].id);
 		allWires.push(wires[key]);
-	for(key in inputs)
+	}
+	for(key in inputs){
+		//console.log(key + ' : ' + inputs[key].id);
 		allWires.push(inputs[key]);
-	for(key in outputs)
+	}
+	for(key in outputs){
+		//console.log(key + ' : ' + outputs[key].id);
 		allWires.push(outputs[key]);
+	}
 	
-	for(i = 0; i < allWires.length; i++)
-		if (allWires[i].isFlyingWire())
-			console.log('Warning, flying wire '+ key);
+	
+
+		//console.log(allWires);
+		//console.log(allWires.length);
+		//console.log('----------');
+		//console.log(gates);
+		//console.log('-*-*-*-*-*-*-*-*-*-');
+
+		for(i = 0; i < allWires.length; i++)
+		if (allWires[i].isFlyingWire()){
+			console.log('Warning, flying wire ');
+			console.log(allWires[i]);
+			for (var j = 0; j < gates.length; j++){
+				var inputIndex = gates[j].inputs.indexOf(allWires[i].id);
+				var outputIndex = gates[j].outputs.indexOf(allWires[i].id);
+				if (inputIndex != -1){
+					//console.log('Trimming ' + allWires[i].toString() + ' from inputs ');
+					//console.log(gates[j]);
+					gates[j].inputs.splice(inputIndex);
+					//console.log(gates[j]);
+				}
+				if(outputIndex != -1){
+					//console.log('Trimming ' + allWires[i].toString() + ' from outputs ');
+					//console.log(gates[j]);
+					gates[j].outputs.splice(outputIndex);
+					//console.log(gates[j]);
+				}
+			}
+			allWires.splice(i);
+			i--;
+		}
+
 
 	return callback(null, gates, allWires);
 }

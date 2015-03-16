@@ -95,6 +95,16 @@ var Component = function(inputs, outputs){ //Component base model.
 	this.x = 0; //Vertical level.
 	this.y = 0; //Horizontal level.
 
+	this.setX = function(val){
+		this.x = val;
+		this.addGate(this);
+	}
+
+	this.setY = function(val){
+		this.y = val;
+		this.addGate(this);
+	}
+
 	this.addInput = function(inputPort){
 		if(typeof inputPort === 'undefined')
 			return;

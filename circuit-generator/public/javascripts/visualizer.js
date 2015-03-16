@@ -5,7 +5,11 @@ function plotGraph(gGates, gWires, map){
     var idToIndexMap = [];
     for(i = 0; i < gGates.length; i++){
             idToIndexMap[gGates[i].id] = i;
-            graphGates[gGates[i].id] = new joint.shapes.logic[map[gGates[i].model]]({position: {x: 60*i, y: 60*i}});
+           if (gGates[i].x == -1 || gGates[i].y == -1)
+                graphGates[gGates[i].id] = new joint.shapes.logic[map[gGates[i].model]]({position: {x: 60*i, y: 60*i}});
+           else
+            graphGates[gGates[i].id] = new joint.shapes.logic[map[gGates[i].model]]({position: {x: gGates[i].x, y: gGates[i].y}});
+           
         }
 
         for (j = 0; j < gWires.length; j++){
