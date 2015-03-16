@@ -50,8 +50,23 @@ GraphBuilder.prototype.LongestPathLayering = function(){ // Assigning the x-coor
 GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
 	for(var i=0; i<this.gates.length; i++){
 		for(var j=0; j<this.adjaceny_list[i].length; i++){
-			for(var k=1; k<this.gates[i].x - gates[this.adjaceny_list[i][j]].x; k++){
-				
+
+			if(this.gates[i].x - gates[this.adjaceny_list[i][j]].x > 1){ // If we have long edge
+				var end_node_index = this.adjaceny_list[i][j]; // end node
+				this.adjaceny_list[i].splice(j, 1); // Remove long edge
+
+				var children;
+				for(var k=1; k<this.gates[i].x - gates[this.adjaceny_list[i][j]].x; k++){
+					var dummy = new Component();
+					dummy.dummy = true;
+					dummy.x = this.gates[i].x - k;
+					this.gates.push(dummy);
+					this.adjaceny_list[i + k-1].push(this.gates.length - 1); // Point to next dummy
+
+				}
+				children = new Array();
+				children.push(end_node_index);
+				this.adjaceny_list.push(children); // Last dummy to end node
 			}
 
 			// Placing 2 nodes at maximum per long edge
@@ -94,24 +109,23 @@ GraphBuilder.prototype.CrossingReduction = function(){
 		this.gate[this.layers[0][i]].y = random_index_array[i];
 	}
 
-	for(var i=0; i<this.layers.length; i++){ // Going left to right
-
+	for(var i=0; i<this.layers.length - 1; i++){ // Going left to right
+		BaryCenter(this.layers[i], this.layers[i+1]);
 	}
 
-	for(var i=this.layers.length-1; i>=0; i--){ // Going right to left
-
+	for(var i=this.layers.length-1; i>0; i--){ // Going right to left
+		BaryCenter(this.layers[i], this.layers[i-1]);
 	}
 };
 
-function BaryCenter(layer1, layer2){
-	var barycenter;
-	for(var i=0; i<layer2.length; i++){
-		var neighbours_count = this.adjaceny_list[layer2[i]].length;
-		var positions_sum = 0;
-		for(var j=0; j<this.adjaceny_list[layer2[i]].length; j++){ // sum of parent 
-			positions_sum = positions_sum + gates[this.adjaceny_list[layer2[i]][j]].y;
+function BaryCenter(layer1, layer2){ // Arrange by the barycenter of the parent nodes
+	for(var i=0; i<layer1.length; i++){
+		for(var j=0; j<this.adjaceny_list[layer1[i]].length; j++){
+			this.gates[this.adjaceny_list[layer1[i]][j]].y = this.gates[this.adjaceny_list[layer1[i]][j]].y + this.gates[layer1[i]].y;
 		}
-		barycenter = (1/neighbours_count) * positions_sum;
+	}
+	for(var i=0; i<layer2.length; i++){
+		this.gates[layer2[i]].y = this.gates[layer2[i]].y * (1/this.gates[layer2[i]].inputs.length);
 	}
 }
 

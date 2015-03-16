@@ -92,8 +92,8 @@ var Component = function(inputs, outputs){ //Component base model.
 	if(typeof outputs !== 'undefined')
 		this.outputs = this.outputs.concat(outputs); 
 
-	this.x = -1; //Vertical level.
-	this.y = -1; //Horizontal level.
+	this.x = 0; //Vertical level.
+	this.y = 0; //Horizontal level.
 
 	this.addInput = function(inputPort){
 		if(typeof inputPort === 'undefined')
