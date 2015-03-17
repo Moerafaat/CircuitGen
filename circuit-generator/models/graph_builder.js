@@ -49,7 +49,7 @@ GraphBuilder.prototype.LongestPathLayering = function(){ // Assigning the x-coor
 
 GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
 	for(var i=0; i<this.gates.length; i++){
-		for(var j=0; j<this.adjaceny_list[i].length; i++){
+		for(var j=0; j<this.adjaceny_list[i].length; j++){
 
 			if(this.gates[i].x - gates[this.adjaceny_list[i][j]].x > 1){ // If we have long edge
 				var end_node_index = this.adjaceny_list[i][j]; // end node
