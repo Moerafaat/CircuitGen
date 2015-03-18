@@ -2,22 +2,71 @@
 <html>
 <head>
     <title>Test</title>
+    <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
+    <script src="/javascripts/jquery-2.1.3.min.js"></script>
+    <script src="/javascripts/bootstrap.min.js"></script>
 </head>
 <body>
-    <div id="paper" class="paper"/></div>
-    <link rel="stylesheet" href="/stylesheets/joint.css" />
-    <link rel="stylesheet" href="/stylesheets/logic.css" />
-    <script src="/javascripts/joint.js"></script> 
-    <script src="/javascripts/joint.shapes.logic.js"></script> 
-    <script src="/javascripts/logic.js"></script>
-    <script src="/javascripts/visualizer.js"></script>
-    <script type="text/javascript">
-    plotGraph(JSON.parse('<%-graphGates%>'), JSON.parse('<%-graphWires%>'), JSON.parse('<%-graphMapper%>')); 
-    </script>
+
+    <div class="container">
+         
+        <!-------->
+        <div id="content">
+            <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
+                <li><a href="#netlist" data-toggle="tab">Netlist File</a></li>
+                <li><a href="#console" data-toggle="tab">Console Log</a></li>
+                <li class="active"><a href="#circuit" data-toggle="tab">Digital Circuit</a></li>
+            </ul>
+            <div id="my-tab-content" class="tab-content">
+                <div class="tab-pane active" id="circuit">
+                    <div id="paper" class="paper"/></div>
+                    <link rel="stylesheet" href="/stylesheets/joint.css" />
+                    <link rel="stylesheet" href="/stylesheets/logic.css" />
+                    <script src="/javascripts/joint.js"></script> 
+                    <script src="/javascripts/joint.shapes.logic.js"></script> 
+                    <script src="/javascripts/logic.js"></script>
+                    <script src="/javascripts/visualizer.js"></script>
+                    <script type="text/javascript">
+                        var graphGates = JSON.parse('<%-graphGates%>');
+                        var graphWires = JSON.parse('<%-graphWires%>');
+                        var graphMapper = JSON.parse('<%-graphMapper%>');
+                        plotGraph(graphGates, graphWires, graphMapper); 
+                    </script>
+                </div>
+                <div class="tab-pane" id="netlist">
+                    <h1>Netlist</h1>
+                </div>
+                <div class="tab-pane" id="console">
+                    <h1>Console</h1>
+                </div>
+                <div class="tab-pane" id="green">
+                    <h1>Green</h1>
+                    <p>green green green green green</p>
+                </div>
+                <div class="tab-pane" id="blue">
+                    <h1>Blue</h1>
+                    <p>blue blue blue blue blue</p>
+                </div>
+            </div>
+            </div>
+
+                   
+
+
+        
+
+
+ 
+    </div> <!-- container -->
+
+
+
+
+
     <style type="text/css">
-            .tool-remove {
-                visibility: hidden;
-            }
+        .tool-remove {
+            visibility: hidden;
+        }
     </style>
 </body>
 </html>
