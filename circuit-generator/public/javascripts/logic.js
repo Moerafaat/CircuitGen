@@ -32,7 +32,7 @@ paper = new joint.dia.Paper({
                 return ms && ms.getAttribute('class') && ms.getAttribute('class').indexOf('output') >= 0; 
             }
         },
-        validateMagnet: function(cellView, magnet){console.log(cellView); console.log(magnet); return false;}
+        validateMagnet: function(cellView, magnet){return false;}
     });
 
 // zoom the viewport by 50%

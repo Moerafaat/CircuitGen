@@ -95,14 +95,25 @@ var Component = function(inputs, outputs){ //Component base model.
 	this.x = 0; //Vertical level.
 	this.y = 0; //Horizontal level.
 
+	this.xLayout = false;
+	this.yLayout = false;
+
 	this.setX = function(val){
-		this.x = val;
-		this.addGate(this);
+		if (val >= 0){
+			this.x = val;
+			this.xLayout = true;
+			this.addGate(this);
+		}else
+			console.log('Invalid X location: ' + val);
 	}
 
 	this.setY = function(val){
-		this.y = val;
-		this.addGate(this);
+		if (val >= 0){
+			this.y = val;
+			this.yLayout = true;
+			this.addGate(this);
+		}else
+			console.log('Invalid Y location: ' + val);
 	}
 
 	this.addInput = function(inputPort){
