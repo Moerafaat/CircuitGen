@@ -2,6 +2,7 @@ var Component = require('./component');
 
 var GraphBuilder = function(gates){
 	this.layers = new Array(1);
+	this.layers[0] = new Array();
 	this.gates = gates;
 	this.adjaceny_list = new Array(gates.length); // Adjaceny list to build DAG
 	for(var i=0; i<gates.length; i++){
@@ -11,6 +12,10 @@ var GraphBuilder = function(gates){
 			this.adjaceny_list[i].push(this.gates.indexOf(neighbours[j]));
 		}
 	}
+	/*console.log("Gates");
+	console.log(this.gates);
+	console.log("Adjaceny List");
+	console.log(this.adjaceny_list);*/
 	// DAG constructed
 };
 
@@ -42,28 +47,42 @@ GraphBuilder.prototype.LongestPathLayering = function(){ // Assigning the x-coor
 			selected = true;
 			current_layer = current_layer + 1;
 			this.layers.push(new Array()); // Extend layer structure
-			included = included.merge(assigned);
+			included = merge(included, assigned);
 		}
 	}
+	/*console.log("Longest Path Layering");
+	console.log(this.layers);
+	console.log("Adjaceny List");
+	console.log(this.adjaceny_list);*/
 };
 
 GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
 	for(var i=0; i<this.gates.length; i++){
 		for(var j=0; j<this.adjaceny_list[i].length; j++){
-
-			if(this.gates[i].x - gates[this.adjaceny_list[i][j]].x > 1){ // If we have long edge
+			console.log(i + " " + j);
+			if(this.gates[i].x - this.gates[this.adjaceny_list[i][j]].x > 1){ // If we have long edge
+				var dummy;
+				var children;
 				var end_node_index = this.adjaceny_list[i][j]; // end node
 				this.adjaceny_list[i].splice(j, 1); // Remove long edge
 
-				var children;
-				for(var k=1; k<this.gates[i].x - gates[this.adjaceny_list[i][j]].x; k++){
-					var dummy = new Component();
+				dummy = new Component.component();
+				dummy.dummy = true;
+				dummy.x = this.gates[i].x - 1;
+				this.gates.push(dummy);
+				this.adjaceny_list[i].push(this.gates.length - 1);
+
+				for(var k=2; k<this.gates[i].x - this.gates[this.adjaceny_list[i][j]].x; k++){
+					dummy = new Component.component();
 					dummy.dummy = true;
 					dummy.x = this.gates[i].x - k;
 					this.gates.push(dummy);
-					this.adjaceny_list[i + k-1].push(this.gates.length - 1); // Point to next dummy
 
+					children = new Array();
+					children.push(this.gates.length - 1);
+					this.adjaceny_list.push(children); // Point to next dummy
 				}
+
 				children = new Array();
 				children.push(end_node_index);
 				this.adjaceny_list.push(children); // Last dummy to end node
@@ -97,6 +116,7 @@ GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
 		}
 	}
 	// Properly Layered DAG constructed
+	console.log("Finished");
 };
 
 GraphBuilder.prototype.CrossingReduction = function(){
@@ -145,11 +165,14 @@ function shuffle(array){ // Shuffing function
 	return array;
 }
 
-Array.prototype.merge = function(array){ // Union of 2 arrays
-    for(var i = 0; i < array.length; i++){
-        if(this.indexOf(array[i]) === -1){
-            this.push(array[i]);
+function merge(array1, array2){ // Union of 2 arrays
+	var array = array1;
+    for(var i = 0; i < array2.length; i++){
+        if(array.indexOf(array2[i]) === -1){
+            array.push(array2[i]);
         }
     }
-    return this;
+    return array;
 };
+
+module.exports = GraphBuilder;
