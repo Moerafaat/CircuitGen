@@ -50,10 +50,12 @@ GraphBuilder.prototype.LongestPathLayering = function(){ // Assigning the x-coor
 			included = merge(included, assigned);
 		}
 	}
-	/*console.log("Longest Path Layering");
+	console.log("Longest Path Layering");
 	console.log(this.layers);
 	console.log("Adjaceny List");
-	console.log(this.adjaceny_list);*/
+	console.log(this.adjaceny_list);
+	console.log(this.adjaceny_list.length);
+	console.log(this.gates.length);
 };
 
 GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
