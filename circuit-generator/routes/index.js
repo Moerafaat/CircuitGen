@@ -32,11 +32,16 @@ function getKey(object, value){
 }
 
 router.get('/', function(req, res){ //Netlist upload view.
-	res.render('parser_test');
+	res.render('index', {title: 'Netlist Circuit Generator'});
 });
 
+router.get('/about', function(req, res){ //Netlist upload view.
+	res.render('about', {title: 'About NCG'});
+});
+
+
 router.get('/ui', function(req, res){ //Netlist upload view.
-	res.render('index', {title: 'NCG'});
+	res.render('index', {title: 'Netlist Circuit Generator'});
 });
 
 
@@ -77,7 +82,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 							OutputPort: 'Output'
 	    			};
 
-	    			res.render('circuit', {graphGates: JSON.stringify(gates), graphWires: JSON.stringify(wires), graphMapper: JSON.stringify(graphMapper)});
+	    			res.render('circuit', {title: 'Circuit', graphGates: JSON.stringify(gates), graphWires: JSON.stringify(wires), graphMapper: JSON.stringify(graphMapper)});
 	    			//res.status(200).send(content);
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}

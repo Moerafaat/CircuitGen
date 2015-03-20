@@ -4,6 +4,8 @@ function plotGraph(gGates, gWires, map){
     var graphWires = [];
     var idToIndexMap = [];
     for(i = 0; i < gGates.length; i++){
+           if(gGates[i].dummy)
+                continue;
            idToIndexMap[gGates[i].id] = i;
            if (!gGates[i].xLayout || !gGates[i].yLayout)
                 graphGates[gGates[i].id] = new joint.shapes.logic[map[gGates[i].model]]({position: {x: 60*i, y: 60*i}});
@@ -36,3 +38,18 @@ function plotGraph(gGates, gWires, map){
 
         current = initializeSignal();
 };
+
+function setPaperDims(width, height){
+    if (width > 0 && height > 0 && paper !== 'undefined')
+        paper.setDimensions(width, height);
+}
+
+function setPaperWidth(width){
+    if (width > 0 && paper !== 'undefined')
+        paper.setDimensions(width, paper.options.height);
+}
+
+function setPaperHeight(height){
+    if (height > 0 && paper !== 'undefined')
+        paper.setDimensions(paper.options.width, height);
+}
