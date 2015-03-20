@@ -81,7 +81,11 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 							OutputPort: 'Output'
 	    			};
 
-	    			res.render('circuit', {title: 'Circuit', graphGates: JSON.stringify(gates), graphWires: JSON.stringify(wires), graphMapper: JSON.stringify(graphMapper)});
+	    			res.render('circuit', { title: 'Circuit',
+	    									graphGates: JSON.stringify(gates),
+	    									graphWires: JSON.stringify(wires),
+	    									graphMapper: JSON.stringify(graphMapper),
+	    									content: content});
 	    			//res.status(200).send(content);
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}
