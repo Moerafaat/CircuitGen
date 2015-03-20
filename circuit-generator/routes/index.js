@@ -64,11 +64,22 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}else{
 	    			var builder = new GraphBuilder(gates);
-	    			builder.LongestPathLayering();
-	    			builder.ProperLayering();
-	    			builder.CrossingReduction();
-	    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
+	    			builder.LongestPathLayering(); // Layering of the DAG
+	    			builder.ProperLayering(); // Dummy nodes placement
+	    			builder.CrossingReduction(); // Crossing reduction
+	    			
+	    			var graph_settings = {
+	    				max_comp_w: 100,
+	    				max_comp_h: 50,
+	    				layer_spacing: 150,
+	    				node_spacing: 50,
+	    				left_marg: 10,
+	    				top_marg: 10
+	    			};
+	    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
+	    			// console.log(GraphingMaterial);
 
+	    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
 	    			res.render('circuit', { title: 'Circuit',
 	    									error: '',
 	    									graphGates: JSON.stringify(gates),

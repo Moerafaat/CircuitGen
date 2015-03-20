@@ -7,6 +7,22 @@ var GraphBuilder = function(gates){
 	this.layers[0] = new Array();
 	this.gates = gates;
 	this.adjaceny_list = new Array(gates.length); // Adjaceny list to build DAG
+
+	// Starting values for absolute graphing
+	this.width = 0;
+	this.height = 0;
+	this.max_number_of_layers = 0;
+	this.max_number_of_nodes = 0;
+
+	this.MAX_COMPONENT_WIDTH = 100;
+	this.MAX_COMPONENT_HEIGHT = 50;
+	this.LAYER_SPACING = 150;
+	this.NODE_SPACING = 50;
+	this.LEFT_MARGIN = 10;
+	this.TOP_MARGIN = 10;
+	this.LAYER_INCREMENTS = this.MAX_COMPONENT_WIDTH + this.LAYER_SPACING;
+	this.MIN_NODE_INCREMENTS = this.MAX_COMPONENT_HEIGHT + this.NODE_SPACING;
+
 	for(var i=0; i<gates.length; i++){
 		this.adjaceny_list[i] = new Array();
 		var neighbours = this.gates[i].getOutputGates(0);
@@ -14,10 +30,6 @@ var GraphBuilder = function(gates){
 			this.adjaceny_list[i].push(this.gates.indexOf(neighbours[j]));
 		}
 	}
-	/*console.log("Gates");
-	console.log(this.gates);
-	console.log("Adjaceny List");
-	console.log(this.adjaceny_list);*/
 	// DAG constructed
 };
 
@@ -39,7 +51,7 @@ GraphBuilder.prototype.LongestPathLayering = function(){ // Assigning the x-coor
 				}
 				if(subset){
 					selected = true;
-					this.gates[i].x = current_layer; // Assign layer
+					this.gates[i].rx = current_layer; // Assign layer
 					this.layers[current_layer].push(i); // Insert in layer structure
 					assigned.push(i);
 				}
@@ -52,18 +64,13 @@ GraphBuilder.prototype.LongestPathLayering = function(){ // Assigning the x-coor
 			included = merge(included, assigned);
 		}
 	}
-	/*console.log("Longest Path Layering");
-	console.log(this.layers);
-	console.log("Adjaceny List");
-	console.log(this.adjaceny_list);
-	console.log(this.adjaceny_list.length);
-	console.log(this.gates.length);*/
+	// Layered DAG constructed
 };
 
 GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
 	for(var i=0; i<this.gates.length; i++){
 		for(var j=0; j<this.adjaceny_list[i].length; j++){
-			if(this.gates[i].x - this.gates[this.adjaceny_list[i][j]].x > 1){ // If we have long edge
+			if(this.gates[i].rx - this.gates[this.adjaceny_list[i][j]].rx > 1){ // If we have long edge	
 				var dummy;
 				var children;
 				var end_node_index = this.adjaceny_list[i][j]; // end node
@@ -71,15 +78,17 @@ GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
 
 				dummy = new Component.component();
 				dummy.dummy = true;
-				dummy.x = this.gates[i].x - 1;
+				dummy.rx = this.gates[i].rx - 1;
 				this.gates.push(dummy);
 				this.adjaceny_list[i].push(this.gates.length - 1);
+				this.layers[dummy.rx].push(this.gates.length-1);
 
-				for(var k=2; k<this.gates[i].x - this.gates[this.adjaceny_list[i][j]].x; k++){
+				for(var k=2; k<this.gates[i].rx - this.gates[this.adjaceny_list[i][j]].rx; k++){
 					dummy = new Component.component();
 					dummy.dummy = true;
-					dummy.x = this.gates[i].x - k;
+					dummy.rx = this.gates[i].rx - k;
 					this.gates.push(dummy);
+					this.layers[dummy.rx].push(this.gates.length-1);
 
 					children = new Array();
 					children.push(this.gates.length - 1);
@@ -118,10 +127,6 @@ GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
 			}*/
 		}
 	}
-	/*console.log("New Length");
-	console.log(this.adjaceny_list.length);
-	console.log(this.gates.length);
-	console.log(this.adjaceny_list);*/
 	// Properly Layered DAG constructed
 };
 
@@ -132,43 +137,132 @@ GraphBuilder.prototype.CrossingReduction = function(){
 	}
 	shuffle(random_index_array);
 	for(var i=0; i<this.layers[this.layers.length-1].length; i++){ // Assign left most layer (right) with random y locations
-		this.gates[this.layers[this.layers.length-1][i]].y = random_index_array[i];
+		this.gates[this.layers[this.layers.length-1][i]].ry = random_index_array[i];
 	}
+	this.layers[this.layers.length-1].sort(compareY(this.gates));
 
 	for(var i=this.layers.length-1; i>0; i--){ // Going left to right
-		BaryCenter(this.gates, this.adjaceny_list, this.layers[i], this.layers[i-1]);
+
+		BaryCenter(this.gates, this.adjaceny_list, this.layers, i, i-1, false);
 	}
 
-	/*for(var i=0; i<this.layers.length-1; i++){ // Going right to left
-		BaryCenter(this.gates, this.adjaceny_list, this.layers[i], this.layers[i+1]);
-	}*/
-	/*for(var i=0; i<this.gates.length; i++){
-		console.log(this.gates[i].x + " " + this.gates[i].y);
-	}*/
+	for(var i=0; i<this.layers.length-1; i++){ // Going right to left
+		BaryCenter(this.gates, this.adjaceny_list, this.layers, i, i+1, true);
+	}
+
+	for(var i=0; i<this.layers.length; i++){ // Map barycenter to relative y-coordinate
+		for(var j=0; j<this.layers[i].length; j++){
+			this.gates[this.layers[i][j]].ry = j;
+		}
+	}
+
 	// Cross Reduced Properly Layered DAG constructed
 };
 
-function BaryCenter(gates, adj_list, layer1, layer2){ // Arrange by the barycenter of the parent nodes
-	console.log(layer1.length + " " + layer2.length);
-	for(var i=0; i<layer1.length; i++){
-		for(var j=0; j<adj_list[layer1[i]].length; j++){
-			gates[adj_list[layer1[i]][j]].y = gates[adj_list[layer1[i]][j]].y + gates[layer1[i]].y;
-			//console.log(gates[adj_list[layer1[i]][j]].y);
+function BaryCenter(gates, adjaceny_list, layers, layer1, layer2, is_reversed){
+	for(var i=0; i<layers[layer2].length; i++){
+		gates[layers[layer2][i]].ry = 0;
+	}
+
+	if(!is_reversed){
+		for(var i=0; i<layers[layer2].length; i++){ // Sum
+			for(var j=0; j<layers[layer1].length; j++){
+				if(adjaceny_list[layers[layer1][j]].indexOf(layers[layer2][i]) != -1){ // is child
+					gates[layers[layer2][i]].ry = gates[layers[layer2][i]].ry + j;
+				}
+			}
+		}
+
+		for(var i=0; i<layers[layer2].length; i++){ // Barycenter
+			if(gates[layers[layer2][i]].inputs.length != 0){
+				gates[layers[layer2][i]].ry = gates[layers[layer2][i]].ry * (1/gates[layers[layer2][i]].inputs.length);
+			}
+			else{
+				gates[layers[layer2][i]].ry = 0; // Locate the free nodes initially at the top
+			}
 		}
 	}
-	for(var i=0; i<layer2.length; i++){
-		if(gates[layer2[i]].inputs.length != 0){
-			//console.log("BEFORE");
-			//console.log(gates[layer2[i]].y);
-			gates[layer2[i]].y = gates[layer2[i]].y * (1/gates[layer2[i]].inputs.length);
-			//console.log((1/gates[layer2[i]].inputs.length));
+
+	else{
+		for(var i=0; i<layers[layer2].length; i++){
+			for(var j=0; j<layers[layer1].length; j++){
+				if(adjaceny_list[layers[layer2][i]].indexOf(layers[layer1][j]) != -1){ // is parent
+					gates[layers[layer2][i]].ry = gates[layers[layer2][i]].ry + j;
+				}
+			}
 		}
-		else{
-			gates[layer2[i]].y = 0;
-			//console.log("else");
-			//console.log(gates[layer2[i]].y);
+
+		for(var i=0; i<layers[layer2].length; i++){
+			gates[layers[layer2][i]].ry = gates[layers[layer2][i]].ry * (1/gates[layers[layer2][i]].outputs.length);
 		}
 	}
+
+	layers[layer2].sort(compareY(gates)); // Sort by barycenter
+}
+
+GraphBuilder.prototype.AssignAbsoluteValues = function(settings){
+	// Apply settings
+	if(settings.hasOwnProperty("max_comp_w"))
+		this.MAX_COMPONENT_WIDTH = settings.max_comp_w;
+	if(settings.hasOwnProperty("max_comp_h"))
+		this.MAX_COMPONENT_HEIGHT = settings.max_comp_h;
+	if(settings.hasOwnProperty("layer_spacing"))
+		this.LAYER_SPACING = settings.layer_spacing;
+	if(settings.hasOwnProperty("node_spacing"))
+		this.NODE_SPACING = settings.node_spacing;
+	if(settings.hasOwnProperty("left_marg"))
+		this.LEFT_MARGIN = settings.left_marg;
+	if(settings.hasOwnProperty("top_marg"))
+		this.TOP_MARGIN = settings.top_marg;
+
+	this.max_number_of_layers = this.layers.length;
+	this.width = this.max_number_of_layers * this.LAYER_INCREMENTS + this.LEFT_MARGIN;
+	for(var i=0; i<this.layers.length; i++){
+		if(this.layers[i].length > this.max_number_of_nodes){
+			this.max_number_of_nodes = this.layers[i].length;
+		}
+	}
+	this.height = this.max_number_of_nodes * this.MIN_NODE_INCREMENTS + this.TOP_MARGIN;
+
+	for(var i=this.layers.length-1; i>=0; i--){
+		var node_increments = (this.height - this.LEFT_MARGIN) / this.layers[i].length;
+		for(var j=0; j<this.layers[i].length; j++){
+			this.gates[this.layers[i][j]].setX(
+				(this.layers.length-1 - this.gates[this.layers[i][j]].rx) * this.LAYER_INCREMENTS
+				+ (i == this.layers.length-1 ? this.LEFT_MARGIN : 0)
+			);
+			this.gates[this.layers[i][j]].setY(
+				this.gates[this.layers[i][j]].ry * node_increments
+				+ (j == 0 ? this.TOP_MARGIN : 0)
+			);
+		}
+	}
+
+	for(var i=0; i<this.layers.length; i++){
+		for(var j=0; j<this.layers[i].length; j++){
+			console.log("GATE: " + this.layers[i][j]
+				+ " AX: " + this.gates[this.layers[i][j]].rx
+				+ " AY: " + this.gates[this.layers[i][j]].ry
+				+ " X: " + this.gates[this.layers[i][j]].x
+				+ " Y: " + this.gates[this.layers[i][j]].y);
+		}
+	}
+
+	// An object with the required data to plot the circuit
+	return {
+		width: this.width,
+		height: this.height,
+		gates: this.gates,
+		adjaceny_list: this.adjaceny_list
+	};
+};
+
+function compareY(gates){
+	return function(a, b){
+		if(gates[a].ry < gates[b].ry) return -1;
+		if(gates[a].ry > gates[b].ry) return 1;
+		return 0;
+	};
 }
 
 function shuffle(array){ // Shuffing function

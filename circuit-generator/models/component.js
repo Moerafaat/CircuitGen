@@ -105,6 +105,8 @@ var Component = function(inputs, outputs){ //Component base model.
 	if(typeof outputs !== 'undefined')
 		this.outputs = this.outputs.concat(outputs); 
 
+	this.rx = 0;
+	this.ry = 0;
 	this.x = 0; //Vertical level.
 	this.y = 0; //Horizontal level.
 
