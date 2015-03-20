@@ -113,6 +113,15 @@ var Component = function(inputs, outputs){ //Component base model.
 	this.xLayout = false;
 	this.yLayout = false;
 
+	this.flipInputs = function(){
+		if (this.inputs.length != 2)
+			return;
+		var temp = this.inputs[0];
+		this.inputs[0] = this.inputs[1];
+		this.inputs[1] = temp;
+		this.addGate(this);
+	}
+
 	this.setX = function(val){
 		if (val >= 0){
 			this.x = val;
