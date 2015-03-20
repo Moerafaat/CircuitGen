@@ -4,7 +4,7 @@ module booth_encoder(a, b);
     wire [18:0] w;
     AND2X1 g0 (
         .A(a[0]),
-        .B(a[1]),
+        .B(a[0]),
         .Y(w[0])
     );
     AND2X1 g1 (
