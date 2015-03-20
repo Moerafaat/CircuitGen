@@ -60,6 +60,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    			var builder = new GraphBuilder(gates);
 	    			builder.LongestPathLayering();
 	    			builder.ProperLayering();
+	    			builder.CrossingReduction();
 	    			var graphMapper = { //Mapping gates to logic digarams.
 	    					AND2X1: 'And',
 							AND2X2: 'And',
