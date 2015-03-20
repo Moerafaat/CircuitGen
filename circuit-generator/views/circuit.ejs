@@ -62,7 +62,8 @@
                                 var graphGates = JSON.parse('<%-graphGates%>');
                                 var graphWires = JSON.parse('<%-graphWires%>');
                                 var graphMapper = JSON.parse('<%-graphMapper%>');
-                                plotGraph(graphGates, graphWires, graphMapper);
+                                var connectionWires = JSON.parse('<%-connectionWires%>');
+                                plotGraph(graphGates, graphWires, graphMapper, connectionWires);
                                 fitView(); 
                             </script>
 

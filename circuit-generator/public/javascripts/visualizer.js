@@ -9,11 +9,22 @@ function countOccur(array, element){
     return indices.length;
 }
 
-function plotGraph(gGates, gWires, map){
+function multipleOccur(array, element){
+    var indices = [];
+    var idx = array.indexOf(element);
+    if (idx == -1)
+      return false;
+    idx = array.indexOf(element, idx + 1);
+    if (idx == -1)
+      return false;
+    return true;
+}
+
+function plotGraph(gGates, gWires, map, connections){
     var graphGates = {};
     var graphWires = [];
     var idToIndexMap = [];
-    for(i = 0; i < gGates.length; i++){
+    for(var i = 0; i < gGates.length; i++){
            if(gGates[i].dummy)
                 continue;
            idToIndexMap[gGates[i].id] = i;
@@ -24,11 +35,101 @@ function plotGraph(gGates, gWires, map){
            
         }
 
-        for (j = 0; j < gWires.length; j++){
+        for(var i = 0; i < gWires.length; i++){
+            var sourceGate = gGates[i];
+            if(sourceGate.dummy)
+              continue;
+            var gWire = gWires[i];
+            console.log('Connections of: ');
+            console.log(sourceGate.model);
+            for(var l = 0; l < gWire.length; l++){
+              var targetGate = gGates[gWire[l]];
+              console.log('Target: ' + targetGate.model + '  ' + targetGate.dummy);
+              if (!targetGate.dummy){
+                     if (targetGate.inputs.length == 1)
+                        graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
+                                         target:{id: graphGates[targetGate.id].id, port:'in'},
+                                         /*router: {name: 'manhattan'},*/
+                                         connector: {name: 'normal'}});
+                     else if(targetGate.inputs.length == 2){
+                        if(multipleOccur(targetGate.inputs, targetGate.inputs[0])){
+                          console.log('Same input twice for ' + targetGate.model);
+                        }else{
+                          var firstInputWire = connections[targetGate.inputs[0]];
+                          var secondInputWire = connections[targetGate.inputs[1]];
+                          var firstInput = gGates[idToIndexMap[firstInputWire.inPort]];
+                          var secondInput = gGates[idToIndexMap[secondInputWire.inPort]];
+                          if(typeof firstInput !== 'undefined' && firstInput.id == sourceGate.id){
+                              graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
+                                         target:{id: graphGates[targetGate.id].id, port:'in1'},
+                                         /*router: {name: 'manhattan'},*/
+                                         connector: {name: 'normal'}});
+                          }else if (typeof secondInput !== 'undefined' && secondInput.id == sourceGate.id){
+                              graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
+                                         target:{id: graphGates[targetGate.id].id, port:'in2'},
+                                         /*router: {name: 'manhattan'},*/
+                                         connector: {name: 'normal'}});
+                          }else
+                            console.warn('Invalid input ' + targetGate.model);
+                        }
+                     }
+                }else{
+                      var wireVerts = [{x: targetGate.x, y: targetGate.y}]
+                      var dummyGateIndexIndex = gWire[l];
+                      var dummyGateIndex = gWires[dummyGateIndexIndex][0];
+                      var targetGate = gGates[dummyGateIndex];
+                      console.log('Reached: ');
+                      console.log(targetGate);
+                      while(targetGate.dummy){
+                        wireVerts.push({x: targetGate.x, y: targetGate.y});
+                        dummyGateIndexIndex = dummyGateIndex;
+                        dummyGateIndex = gWires[dummyGateIndexIndex][0];
+                        targetGate = gGates[dummyGateIndex][0];
+                        console.log(targetGate);
+                      }
+                      console.log(wireVerts);
+
+                      if (targetGate.inputs.length == 1)
+                        graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
+                                         target:{id: graphGates[targetGate.id].id, port:'in'},
+                                         /*router: {name: 'manhattan'},*/
+                                         connector: {name: 'normal'},
+                                         vertices: wireVerts});
+                     else if(targetGate.inputs.length == 2){
+                        if(multipleOccur(targetGate.inputs, targetGate.inputs[0])){
+                          console.log('Same input twice for ' + targetGate.model);
+                        }else{
+                          var firstInputWire = connections[targetGate.inputs[0]];
+                          var secondInputWire = connections[targetGate.inputs[1]];
+                          var firstInput = gGates[idToIndexMap[firstInputWire.inPort]];
+                          var secondInput = gGates[idToIndexMap[secondInputWire.inPort]];
+                          if(typeof firstInput !== 'undefined' && firstInput.id == sourceGate.id){
+                              graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
+                                         target:{id: graphGates[targetGate.id].id, port:'in1'},
+                                         /*router: {name: 'manhattan'},*/
+                                         connector: {name: 'normal'},
+                                         vertices: wireVerts});
+                          }else if (typeof secondInput !== 'undefined' && secondInput.id == sourceGate.id){
+                              graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
+                                         target:{id: graphGates[targetGate.id].id, port:'in2'},
+                                         /*router: {name: 'manhattan'},*/
+                                         connector: {name: 'normal'},
+                                         vertices: wireVerts});
+                          }else
+                            console.warn('Invalid input ' + targetGate.model);
+                        }
+                     }
+                }
+
+            }
+            console.log('------');
+        }
+
+        /*for (j = 0; j < gWires.length; j++){
             var gWire = gWires[j];
             if (typeof(gWire.inPort) === 'undefined' || typeof gWire.outPorts === 'undefined'
                 || gWire.inPort == '' || gWire.outPorts.length == 0){
-                console.log('Skipping: ');
+                console.log('Skipping: ')
                 console.log(gWire);
                 continue;
             }
@@ -38,7 +139,7 @@ function plotGraph(gGates, gWires, map){
                 if (gGates[idToIndexMap[gWire.outPorts[i]]].inputs.length == 1)
                     graphWires.push({source: {id: graphGates[gWire.inPort].id, port: 'out'},
                                      target:{id: graphGates[gWire.outPorts[i]].id, port:'in'},
-                                     router: {name: 'manhattan'},
+                                     /*router: {name: 'manhattan'},
                                      connector: {name: 'rounded'}});
                 else if (gGates[idToIndexMap[gWire.outPorts[i]]].inputs.length == 2){
                     //console.log(gWire.id + ' in ');
@@ -48,23 +149,23 @@ function plotGraph(gGates, gWires, map){
                         //console.log('Same input for 2 ports');
                         graphWires.push({source: {id: graphGates[gWire.inPort].id, port: 'out'},
                                          target:{id: graphGates[gWire.outPorts[i]].id, port:'in' + (gGates[idToIndexMap[gWire.outPorts[i]]].inputs.indexOf(gWire.id) + 1)},
-                                         router: {name: 'manhattan'},
+                                         /*router: {name: 'manhattan'},
                                          connector: {name: 'rounded'}});
                         graphWires.push({source: {id: graphGates[gWire.inPort].id, port: 'out'},
                                          target:{id: graphGates[gWire.outPorts[i]].id, port:'in' + (gGates[idToIndexMap[gWire.outPorts[i]]].inputs.indexOf(gWire.id) + 2)},
-                                         router: {name: 'manhattan'},
+                                         /*router: {name: 'manhattan'},
                                          connector: {name: 'rounded'}});
                     }else{
                         graphWires.push({source: {id: graphGates[gWire.inPort].id, port: 'out'},
                                          target:{id: graphGates[gWire.outPorts[i]].id, port:'in' + (gGates[idToIndexMap[gWire.outPorts[i]]].inputs.indexOf(gWire.id) + 1)},
-                                         router: {name: 'manhattan'},
+                                         /*router: {name: 'manhattan'},
                                          connector: {name: 'rounded'}});
                     }
                 }else{
                     console.warn('The current version only support graphing 2-input gates.');
                 }
             }           
-        }
+        }*/
 
 
         graph.addCells(_.toArray(graphGates));

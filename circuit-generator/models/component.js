@@ -350,7 +350,7 @@ function wire(wireType, input, outputs){
 	Component.wires[this.id] = this;
 	this.xLayout = false;
 	this.yLayout = false;
-
+	this.vertices = [];
 	this.setX = function(val){
 		if (val >= 0){
 			this.x = val;
@@ -389,6 +389,31 @@ function wire(wireType, input, outputs){
 			Component.wires[this.id] = this;
 		}
 	};
+
+	this.addVertex = function(vertex){
+		if(typeof vertex === 'undefined')
+			return;
+		var vIndex = this.vertices.indexOf(vertex)
+		if (this.vertices.indexOf(vertex) == -1){
+			this.vertices.push(vertex);
+			Component.wires[this.id] = this;
+		}
+	};
+
+	this.removeVertex = function(vertex){
+		if(typeof vertex === 'undefined')
+			return;
+		var vIndex = this.vertices.indexOf(vertex)
+		if (this.vertices.indexOf(vertex) != -1){
+			this.vertices.splice(vIndex, 1);
+			Component.wires[this.id] = this;
+		}
+	};
+
+	this.clearVertices = function(){
+		this.vertices = [];
+		Component.wires[this.id] = this;
+	}
 };
 
 wire.prototype.toString = function(){

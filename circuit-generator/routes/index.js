@@ -77,14 +77,21 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    				top_marg: 10
 	    			};
 	    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
-	    			// console.log(GraphingMaterial);
+	    			console.log('Gates:');
+	    			console.log(GraphingMaterial.gates);
+	    			console.log('Adjacency:');
+	    			console.log(GraphingMaterial.adjaceny_list);
 
 	    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
+	    			var wiresMap = {};
+	    			for(var i = 0; i < wires.length; i++)
+	    				wiresMap[wires[i].id] = wires[i];
 	    			res.render('circuit', { title: 'Circuit',
 	    									error: '',
-	    									graphGates: JSON.stringify(gates),
-	    									graphWires: JSON.stringify(wires),
+	    									graphGates: JSON.stringify(GraphingMaterial.gates),
+	    									graphWires: JSON.stringify(GraphingMaterial.adjaceny_list),
 	    									graphMapper: JSON.stringify(graphMapper),
+	    									connectionWires: JSON.stringify(wiresMap),
 	    									warnings: JSON.stringify(warnings),
 	    									content: content});
 	    			//res.status(200).send(content);
