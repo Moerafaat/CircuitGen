@@ -63,9 +63,11 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}else{
 	    			var builder = new GraphBuilder(gates);
-	    			builder.LongestPathLayering();
-	    			builder.ProperLayering();
-	    			builder.CrossingReduction();
+	    			builder.LongestPathLayering(); // Layering of the DAG
+	    			builder.ProperLayering(); // Dummy nodes placement
+	    			builder.CrossingReduction(); // Crossing reduction
+
+	    			var dimensions = builder.GetDimensions(); // Get width and height
 	    			var graphMapper = { //Mapping gates to logic digarams.
 	    					AND2X1: 'And',
 							AND2X2: 'And',
