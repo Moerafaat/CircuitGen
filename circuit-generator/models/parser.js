@@ -1,6 +1,7 @@
 /*Netlist Parser Model*/
 
 var Component = require('./component');
+var component = Component.component;
 var wire = Component.wire;
 var and = Component.and;
 var nand = Component.nand;
@@ -42,6 +43,10 @@ function getAssignRegEx(){
 	return new RegExp('\\s*assign\\s*(\\S+)\\s*=\\s*(\\S+)\\s*', 'gm');
 }
 
+function getAssignReplaceRegEx(wireName){
+	return new RegExp('\\b('+ wireName + ')\\b', 'gm');
+}
+
 
 
 module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist parsing function.
@@ -79,11 +84,140 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 	var gates = [];
 
 	var handleAssign = function(){
+		//console.log(gates);
 		for(var i = 0; i < lines.length; i++){
 			lines[i] = lines[i].trim();
 			var assignRegex = getAssignRegEx();
 			if (assignRegex.test(lines[i])){
-				console.log('Assing: ' + lines[i]);
+					console.log('Assign: ' + lines[i]);
+					var assignRegex = getAssignRegEx();
+					var sides = assignRegex.exec(lines[i]);
+					var lhs = sides[1];
+					var rhs = sides[2];
+					var lhsWire;
+					var rhsWire;
+					var isLConnection = false;
+					var isLInput = false;
+					var isLOutput = false;
+					var isRConnection = false;
+					var isRInput = false;
+					var isROutput = false;
+					if (typeof(wires[lhs]) !== 'undefined'){
+						isLConnection = true;
+						lhsWire = wires[lhs];
+					}else if (typeof(inputs[lhs]) !== 'undefined'){
+						isLInput = true;
+						lhsWire = inputs[lhs];
+					}else if (typeof(outputs[lhs]) !== 'undefined'){
+						isLOutput = true;
+						lhsWire = outputs[lhs];
+					}else{
+						console.log('Warning, undefined wire ' + lhs);
+						warnings.push('Warning, undefined wires ' + lhs + '.');
+						continue;
+					}
+
+					if (typeof(wires[rhs]) !== 'undefined'){
+						isRConnection = true;
+						rhsWire = wires[rhs];
+					}else if (typeof(inputs[rhs]) !== 'undefined'){
+						isRInput = true;
+						rhsWire = inputs[rhs];
+					}else if (typeof(outputs[rhs]) !== 'undefined'){
+						isROutput = true;
+						rhsWire = outputs[rhs];
+					}else{
+						console.log('Warning, undefined wire ' + rhs);
+						warnings.push('Warning, undefined wires ' + rhs + '.');
+						continue;
+					}
+
+					//console.log('LHS: ' + lhsWire);
+					//console.log('RHS: ' + rhsWire);
+					if(lhsWire.type != WireType.CONNECTION && rhsWire.type != WireType.CONNECTION){
+							if (lhsWire.type == WireType.INPUT){
+								console.log('Cannot assign to input wire');
+								warnings.push('Warning, cannot assign wire ' + rhs + 'to input wire ' + lhs);
+								continue;
+							}else if (rhsWire.type == WireType.OUTPUT){
+								//console.log('Output to Output');
+								var outputGate = component.gates[lhsWire.outPorts[0]];
+								outputGate.clearInputs();
+								outputGate.addInput(rhsWire.id);
+								rhsWire.addOutput(outputGate.id);
+								if (isLInput){
+									delete inputs[lhs];
+									delete component.wires[lhs];
+								}else if (isLOutput){
+									delete outputs[lhs];
+									delete component.wires[lhs];
+								}else if (isLConnection){
+									delete wires[lhs];
+									delete component.wires[lhs];
+								}else
+									console.log('Unkown wire type ' + lhsWire);
+							}else if(rhsWire.type == WireType.INPUT){
+								//console.log('Input to Output');
+								var outputGate = component.gates[lhsWire.outPorts[0]];
+								outputGate.clearInputs();
+								outputGate.addInput(rhsWire.id);
+								rhsWire.addOutput(outputGate.id);
+								console.log(outputGate);
+								if (isLInput){
+									delete inputs[lhs];
+									delete component.wires[lhs];
+								}else if (isLOutput){
+									delete outputs[lhs];
+									delete component.wires[lhs];
+								}else if (isLConnection){
+									delete wires[lhs];
+									delete component.wires[lhs];
+								}else
+									console.log('Unkown wire type ' + lhsWire);
+							}else
+								console.log('Invalid assign');
+					}else if (lhsWire.type == WireType.CONNECTION){
+							//console.log('Wire <- Input/Output');
+							for(var j = 0; j < lines.length; j++){
+								if (j == i)
+									continue;
+								else{
+									var before =  lines[j]; 
+									var replacementRegex = getAssignReplaceRegEx(lhs);
+									lines[j] = lines[j].replace(replacementRegex, rhs);
+									if (before != lines[j])
+										console.log('Replaced ' + before + ' with ' + lines[j]);
+								}
+							}
+					}else if (rhsWire.type == WireType.CONNECTION){
+							//console.log('Output <- Wire ');
+							//console.log(lhsWire);
+							if (lhsWire.type != WireType.OUTPUT){
+								console.log('Cannot assign to input wire');
+								warnings.push('Warning, cannot assign wire ' + rhs + 'to input wire ' + lhs);
+								continue;
+							}
+							var outputGate = component.gates[lhsWire.outPorts[0]];
+							outputGate.clearInputs();
+							outputGate.addInput(rhsWire.id);
+							rhsWire.addOutput(outputGate.id);
+							console.log(outputGate);
+							if (isLInput){
+								delete inputs[lhs];
+								delete component.wires[lhs];
+							}else if (isLOutput){
+								delete outputs[lhs];
+								delete component.wires[lhs];
+							}else if (isLConnection){
+								delete wires[lhs];
+								delete component.wires[lhs];
+							}else
+								console.log('Unkown wire type ' + lhsWire);
+
+					}else{
+							console.log('Error at ' + lhs + ':' + lhsWire+ '\n' + rhs + ':' + rhsWire);
+					}
+						
 				lines.splice(i--, 1);
 			}
 		}

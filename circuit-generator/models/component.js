@@ -28,7 +28,7 @@ var VerilogToJointMap = {
 	and: 'And',
 	nand: 'Nand',
 	or: 'Or',
-	nor: 'Or',
+	nor: 'Nor',
 	xor: 'Xor',
 	not: 'Not',
 	buf: 'Repeater',
@@ -132,23 +132,30 @@ var Component = function(inputs, outputs){ //Component base model.
 	this.addInput = function(inputPort){
 		if(typeof inputPort === 'undefined')
 			return;
-		else if (this.inputs.indexOf(inputPort) == -1){
+		else{
 			this.inputs = this.inputs.concat(inputPort);
 			this.addGate(this);
 		}
-		else
-			console.log('Connection: ' + input + ' already exists');
 	};
 
 	this.addOutput = function(outputPort){
 		if(typeof outputPort === 'undefined')
 			return;
-		else if (this.outputs.indexOf(outputPort) == -1){
+		else{
 			this.outputs = this.outputs.concat(outputPort);
 			this.addGate(this);
-		}else
-			console.log('Connection: ' + output + ' already exists');
+		}
 	};
+
+	this.clearInputs = function(){
+		this.inputs = [];
+		this.addGate(this);
+	}
+
+	this.clearOutputs = function(){
+		this.outputs = [];
+		this.addGate(this);
+	}
 }
 
 
@@ -336,9 +343,29 @@ function wire(wireType, input, outputs){
 	this.outPorts = []; //Output port.
 	if(typeof outputs !== 'undefined')
 		this.outPorts = this.outPorts.concat(outputs); 
-	this.x = -1; //Vertical level.
-	this.y = -1; //Horizontal level.
+	this.x = 0; //Vertical level.
+	this.y = 0; //Horizontal level.
 	Component.wires[this.id] = this;
+	this.xLayout = false;
+	this.yLayout = false;
+
+	this.setX = function(val){
+		if (val >= 0){
+			this.x = val;
+			this.xLayout = true;
+			Component.wires[this.id] = this;
+		}else
+			console.log('Invalid X location: ' + val);
+	}
+
+	this.setY = function(val){
+		if (val >= 0){
+			this.y = val;
+			this.yLayout = true;
+			Component.wires[this.id] = this;
+		}else
+			console.log('Invalid Y location: ' + val);
+	}
 
 	if (typeof wireType === 'undefined')
 		this.type = WireType.CONNECTION;

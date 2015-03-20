@@ -29,7 +29,7 @@
 
 
 
-    <div class="container container-circuit round">
+    <div class="container container-circuit round" id="tabs-container">
        
         <div id="content">
             <div class="row" id="tabs-rows">
@@ -62,7 +62,8 @@
                                 var graphGates = JSON.parse('<%-graphGates%>');
                                 var graphWires = JSON.parse('<%-graphWires%>');
                                 var graphMapper = JSON.parse('<%-graphMapper%>');
-                                plotGraph(graphGates, graphWires, graphMapper); 
+                                plotGraph(graphGates, graphWires, graphMapper);
+                                fitView(); 
                             </script>
 
                         </div>
