@@ -14,7 +14,7 @@ var GraphBuilder = function(gates){
 	this.max_number_of_layers = 0;
 	this.max_number_of_nodes = 0;
 
-	this.MAX_COMPONENT_WIDTH = 50;
+	this.MAX_COMPONENT_WIDTH = 100;
 	this.MAX_COMPONENT_HEIGHT = 50;
 	this.LAYER_SPACING = 150;
 	this.NODE_SPACING = 50;
@@ -156,12 +156,6 @@ GraphBuilder.prototype.CrossingReduction = function(){
 		}
 	}
 
-	console.log("X and Y");
-	for(var i=0; i<this.layers.length; i++){
-		for(var j=0; j<this.layers[i].length; j++){
-			console.log("GATE: " + this.layers[i][j] + " X: " + this.gates[this.layers[i][j]].rx + " Y: " + this.gates[this.layers[i][j]].ry);
-		}
-	}
 	// Cross Reduced Properly Layered DAG constructed
 };
 
@@ -206,7 +200,21 @@ function BaryCenter(gates, adjaceny_list, layers, layer1, layer2, is_reversed){
 	layers[layer2].sort(compareY(gates)); // Sort by barycenter
 }
 
-GraphBuilder.prototype.AssignAbsoluteValues = function(){
+GraphBuilder.prototype.AssignAbsoluteValues = function(settings){
+	// Apply settings
+	if(settings.hasOwnProperty("max_comp_w"))
+		this.MAX_COMPONENT_WIDTH = settings.max_comp_w;
+	if(settings.hasOwnProperty("max_comp_h"))
+		this.MAX_COMPONENT_HEIGHT = settings.max_comp_h;
+	if(settings.hasOwnProperty("layer_spacing"))
+		this.LAYER_SPACING = settings.layer_spacing;
+	if(settings.hasOwnProperty("node_spacing"))
+		this.NODE_SPACING = settings.node_spacing;
+	if(settings.hasOwnProperty("left_marg"))
+		this.LEFT_MARGIN = settings.left_marg;
+	if(settings.hasOwnProperty("top_marg"))
+		this.TOP_MARGIN = settings.top_marg;
+
 	this.max_number_of_layers = this.layers.length;
 	this.width = this.max_number_of_layers * this.LAYER_INCREMENTS + this.LEFT_MARGIN;
 	for(var i=0; i<this.layers.length; i++){
@@ -217,8 +225,36 @@ GraphBuilder.prototype.AssignAbsoluteValues = function(){
 	this.height = this.max_number_of_nodes * this.MIN_NODE_INCREMENTS + this.TOP_MARGIN;
 
 	for(var i=this.layers.length-1; i>=0; i--){
-
+		var node_increments = (this.height - this.LEFT_MARGIN) / this.layers[i].length;
+		for(var j=0; j<this.layers[i].length; j++){
+			this.gates[this.layers[i][j]].setX(
+				(this.layers.length-1 - this.gates[this.layers[i][j]].rx) * this.LAYER_INCREMENTS
+				+ (i == this.layers.length-1 ? this.LEFT_MARGIN : 0)
+			);
+			this.gates[this.layers[i][j]].setY(
+				this.gates[this.layers[i][j]].ry * node_increments
+				+ (j == 0 ? this.TOP_MARGIN : 0)
+			);
+		}
 	}
+
+	for(var i=0; i<this.layers.length; i++){
+		for(var j=0; j<this.layers[i].length; j++){
+			console.log("GATE: " + this.layers[i][j]
+				+ " AX: " + this.gates[this.layers[i][j]].rx
+				+ " AY: " + this.gates[this.layers[i][j]].ry
+				+ " X: " + this.gates[this.layers[i][j]].x
+				+ " Y: " + this.gates[this.layers[i][j]].y);
+		}
+	}
+
+	// An object with the required data to plot the circuit
+	return {
+		width: this.width,
+		height: this.height,
+		gates: this.gates,
+		adjaceny_list: this.adjaceny_list
+	};
 };
 
 function compareY(gates){
