@@ -1,3 +1,5 @@
+/*Graph Builder Model*/
+
 var Component = require('./component');
 
 var GraphBuilder = function(gates){

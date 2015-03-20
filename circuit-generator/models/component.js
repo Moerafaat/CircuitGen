@@ -13,7 +13,8 @@ var Type = {
 	WIRE: 6,
 	BUS: 7,
 	INPORT: 8,
-	OUTPORT: 9
+	OUTPORT: 9,
+	BUF: 10
 };
 module.exports.Type = Type;
 
@@ -21,6 +22,18 @@ var WireType = {
 	INPUT: 0,
 	OUTPUT: 1,
 	CONNECTION: 2
+};
+
+var VerilogToJointMap={
+	and: 'And',
+	nand: 'Nand',
+	or: 'Or',
+	nor: 'Or',
+	xor: 'Xor',
+	not: 'Not',
+	buf: 'Repeater',
+	InputPort: 'Input',
+	OutputPort: 'Output'
 };
 
 module.exports.WireType = WireType;
@@ -269,6 +282,16 @@ function not(model, inputs, outputs){
 	this.addGate(this);
 }
 
+buf.prototype = new Component(); //Buffer gate model.
+buf.prototype.constructor = buf;
+function buf(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.BUF;
+	this.model = model;
+	this.addGate(this);
+}
+
+
 input.prototype = new Component(); //Input model
 input.prototype.constructor = input;
 function input(inputs, outputs){
@@ -297,6 +320,7 @@ module.exports.or = or;
 module.exports.nor = nor;
 module.exports.xor = xor;
 module.exports.not = not;
+module.exports.buf = buf;
 module.exports.input = input;
 module.exports.output = output;
 
@@ -451,5 +475,28 @@ module.exports.EDIF = {
 		inputPorts: ['A'],
 		outputPorts: ['Y'],
 		primitive: 'not'
+	},
+	BUFX2:{
+		name: 'BUFX2',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'buf'
+	},
+	BUFX4:{
+		name: 'BUFX4',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'buf'
+	},
+	getJointMap: function(){
+		var map = {};
+		for (key in this){
+			if (key == 'getJointMap')
+				continue;
+			map[key]= VerilogToJointMap[this[key].primitive];
+		}
+		map['InputPort'] = VerilogToJointMap['InputPort'];
+		map['OutputPort'] = VerilogToJointMap['OutputPort'];
+		return map;
 	}
 };

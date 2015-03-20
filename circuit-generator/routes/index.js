@@ -13,6 +13,7 @@ var or =Component.or;
 var nor = Component.nor;
 var xor = Component.xor;
 var not = Component.not;
+var edif = Component.EDIF;
 
 function countArray(obj){ //Key-value array size counter.
 	var size = 0, key;
@@ -71,21 +72,9 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    			builder.LongestPathLayering();
 	    			builder.ProperLayering();
 	    			builder.CrossingReduction();
-	    			var graphMapper = { //Mapping gates to logic digarams.
-	    					AND2X1: 'And',
-							AND2X2: 'And',
-							NAND2X1:'Nand',
-							NAND2X2: 'Nand',
-							OR2X1: 'Or',
-							OR2X2: 'Or',
-							NOR2X1: 'Nor',
-							NOR2X2: 'Nor',
-							XOR2X1: 'Xor',
-							XOR2X2: 'Xor',
-							INVX1: 'Not',
-							InputPort: 'Input',
-							OutputPort: 'Output'
-	    			};
+	    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
+
+	    			console.log(graphMapper);
 
 	    			res.render('circuit', { title: 'Circuit',
 	    									error: '',
