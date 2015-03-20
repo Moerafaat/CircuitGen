@@ -15,7 +15,7 @@
 
     <div class = "row-header row">
         <div class = "col-lg-12 centered col-header">
-            <ul id="tabs" class="nav nav-tabs navbar-header" data-tabs="tabs">
+            <ul id="tabs" class="nav nav-tabs navbar-header">
                         <li><a href="/" class= "navbar-branding" style="border-radius: 0 0 0 0; padding-right: 0.4em; padding-left: 0.4em;">Netlist Circuit Generator</a></li>
                          <li style="height: 100%;"><a href="/about" class= "navbar-element" style="border-radius: 0 0 0 0; padding-right: 0.4em; padding-left: 0.4em;">About</a></li>
             </ul>
@@ -30,16 +30,25 @@
     <div class="container container-circuit round">
        
         <div id="content">
-            <div class="row">
-                <ul id="tabs" class="nav nav-tabs navbar-header" data-tabs="tabs" style="padding-left: 1em;">
-                    <li><a href="#netlist" class="tab-element round" data-toggle="tab">Netlist File</a></li>
-                    <li><a href="#console" class="tab-element" data-toggle="tab">Console Log</a></li>
-                    <li class="active tab-element"><a href="#circuit" data-toggle="tab">Digital Circuit</a></li>
+            <div class="row" id="tabs-rows">
+                <ul id="circuit-tabs" class="nav nav-tabs navbar-header" style="padding-left: 1em;">
+                    <li><a href="#netlist" class="tab-element" data-toggle="tab">Netlist File</a></li>
+                    <%if (error == ''){%>
+                        <li><a href="#console" id="console-tab" class="tab-element" data-toggle="tab">Console Log</a></li>
+                        <li class="active"><a href="#circuit" class="tab-element" data-toggle="tab">Digital Circuit</a></li>
+                    <%}else{%>
+                        <li class = "active"><a href="#console" id="console-tab" class="tab-element" data-toggle="tab">Console Log</a></li>
+                        <li><a href="#circuit" class="tab-element" data-toggle="tab">Digital Circuit</a></li>
+                    <%}%>
                 </ul>
             </div>
             <div class="row row-tab">
                     <div id="my-tab-content" class="tab-content">
+                    <%if (error == ''){%>
                         <div class="tab-pane active" id="circuit">
+                    <%}else{%>
+                        <div class="tab-pane" id="circuit">
+                    <%}%>
                             <div id="paper" class="paper"></div>
                             <link rel="stylesheet" href="/stylesheets/joint.css" />
                             <link rel="stylesheet" href="/stylesheets/logic.css" />
@@ -55,9 +64,28 @@
                             </script>
 
                         </div>
-                        <div class="tab-pane" id="console">
+                        <%if (error == ''){%>
+                            <div class="tab-pane" id="console">
+                        <%}else{%>
+                            <div class="tab-pane active" id="console">
+                        <%}%>
                             <div>
-                                <p>Console</p>
+                                <%if (error == ''){%>
+                                    <% warningsArray = JSON.parse(warnings) %>
+                                    <%if (warningsArray.length == 0){%>
+                                        <p>No errors or warnings detected</p>
+                                    <%}else{%>
+                                        <ul class="list-group">
+                                            <%warningsArray.forEach(function(warn){%>
+                                                <li class="list-group-item"><%=warn%></li>
+                                            <%})%>
+                                        </ul>
+                                    <%}%>
+                                <%}else{%>
+                                    <ul class="list-group">
+                                            <li class="list-group-item">Error: <%=error%></li>
+                                    </ul>
+                                <%}%>
                             </div>
                         </div>
                         <div class="tab-pane" id="netlist">

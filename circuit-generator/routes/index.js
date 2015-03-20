@@ -56,10 +56,15 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	        fs.unlink(filePath); //Deleting uploaded file.
 	    }else{
 	    	content = data;
-	    	Parser.parse(content, function(err, gates, wires){
+	    	Parser.parse(content, null, function(err, gates, wires, warnings){
 	    		if(err){
 	    			console.log(err);
-	    			res.status(500).send(err);
+	    			res.render('circuit', { title: 'Circuit',
+	    									error: err,
+	    									graphGates: JSON.stringify([]),
+	    									graphWires: JSON.stringify([]),
+	    									graphMapper: JSON.stringify([]),
+	    									content: content});
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}else{
 	    			var builder = new GraphBuilder(gates);
@@ -82,9 +87,11 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    			};
 
 	    			res.render('circuit', { title: 'Circuit',
+	    									error: '',
 	    									graphGates: JSON.stringify(gates),
 	    									graphWires: JSON.stringify(wires),
 	    									graphMapper: JSON.stringify(graphMapper),
+	    									warnings: JSON.stringify(warnings),
 	    									content: content});
 	    			//res.status(200).send(content);
 	    			fs.unlink(filePath); //Deleting processed file.
