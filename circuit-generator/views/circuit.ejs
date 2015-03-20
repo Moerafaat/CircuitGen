@@ -35,10 +35,10 @@
                     <li><a href="#netlist" class="tab-element" data-toggle="tab">Netlist File</a></li>
                     <%if (error == ''){%>
                         <li><a href="#console" id="console-tab" class="tab-element" data-toggle="tab">Console Log</a></li>
-                        <li class="active"><a href="#circuit" class="tab-element" data-toggle="tab">Digital Circuit</a></li>
+                        <li class="active" id="cricuit-tab-li"><a href="#circuit" class="tab-element" data-toggle="tab">Digital Circuit</a></li>
                     <%}else{%>
                         <li class = "active"><a href="#console" id="console-tab" class="tab-element" data-toggle="tab">Console Log</a></li>
-                        <li><a href="#circuit" class="tab-element" data-toggle="tab">Digital Circuit</a></li>
+                        <li id="cricuit-tab-li"><a href="#circuit" class="tab-element" data-toggle="tab">Digital Circuit</a></li>
                     <%}%>
                 </ul>
             </div>
@@ -82,6 +82,9 @@
                                         </ul>
                                     <%}%>
                                 <%}else{%>
+                                    <script type="text/javascript">
+                                        $("#cricuit-tab-li").remove();
+                                    </script>
                                     <ul class="list-group">
                                             <li class="list-group-item">Error: <%=error%></li>
                                     </ul>
