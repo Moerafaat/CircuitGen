@@ -275,11 +275,12 @@ joint.shapes.logic.Wire = joint.dia.Link.extend({
 
         attrs: {
             '.connection': { 'stroke-width': 2 },
-            '.marker-vertex': { r: 7 }
+            //'.marker-vertex': { r: 7 }
+            '.marker-vertex': { r: 4 }
         },
 
-        router: { name: 'orthogonal' },
-        connector: { name: 'rounded', args: { radius: 10 }},
+        //router: { name: 'orthogonal' },
+        connector: { name: 'rounded', args: { radius: 5 }},
 
     }, joint.dia.Link.prototype.defaults)
 

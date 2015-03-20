@@ -21,6 +21,8 @@ function multipleOccur(array, element){
 }
 
 function plotGraph(gGates, gWires, map, connections){
+    //var router = 'None';
+    var connector = 'rounded';
     var graphGates = {};
     var graphWires = [];
     var idToIndexMap = [];
@@ -49,8 +51,8 @@ function plotGraph(gGates, gWires, map, connections){
                      if (targetGate.inputs.length == 1)
                         graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
                                          target:{id: graphGates[targetGate.id].id, port:'in'},
-                                         /*router: {name: 'manhattan'},*/
-                                         connector: {name: 'normal'}});
+                                         /*router: {name: router},*/
+                                         connector: {name: connector}});
                      else if(targetGate.inputs.length == 2){
                         if(multipleOccur(targetGate.inputs, targetGate.inputs[0])){
                           console.log('Same input twice for ' + targetGate.model);
@@ -62,13 +64,13 @@ function plotGraph(gGates, gWires, map, connections){
                           if(typeof firstInput !== 'undefined' && firstInput.id == sourceGate.id){
                               graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
                                          target:{id: graphGates[targetGate.id].id, port:'in1'},
-                                         /*router: {name: 'manhattan'},*/
-                                         connector: {name: 'normal'}});
+                                         /*router: {name: router},*/
+                                         connector: {name: connector}});
                           }else if (typeof secondInput !== 'undefined' && secondInput.id == sourceGate.id){
                               graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
                                          target:{id: graphGates[targetGate.id].id, port:'in2'},
-                                         /*router: {name: 'manhattan'},*/
-                                         connector: {name: 'normal'}});
+                                         /*router: {name: router},*/
+                                         connector: {name: connector}});
                           }else
                             console.warn('Invalid input ' + targetGate.model);
                         }
@@ -92,8 +94,8 @@ function plotGraph(gGates, gWires, map, connections){
                       if (targetGate.inputs.length == 1)
                         graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
                                          target:{id: graphGates[targetGate.id].id, port:'in'},
-                                         /*router: {name: 'manhattan'},*/
-                                         connector: {name: 'normal'},
+                                         /*router: {name: router},*/
+                                         connector: {name: connector},
                                          vertices: wireVerts});
                      else if(targetGate.inputs.length == 2){
                         if(multipleOccur(targetGate.inputs, targetGate.inputs[0])){
@@ -106,14 +108,14 @@ function plotGraph(gGates, gWires, map, connections){
                           if(typeof firstInput !== 'undefined' && firstInput.id == sourceGate.id){
                               graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
                                          target:{id: graphGates[targetGate.id].id, port:'in1'},
-                                         /*router: {name: 'manhattan'},*/
-                                         connector: {name: 'normal'},
+                                         /*router: {name: router},*/
+                                         connector: {name: connector},
                                          vertices: wireVerts});
                           }else if (typeof secondInput !== 'undefined' && secondInput.id == sourceGate.id){
                               graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
                                          target:{id: graphGates[targetGate.id].id, port:'in2'},
-                                         /*router: {name: 'manhattan'},*/
-                                         connector: {name: 'normal'},
+                                         /*router: {name: router},*/
+                                         connector: {name: connector},
                                          vertices: wireVerts});
                           }else
                             console.warn('Invalid input ' + targetGate.model);
