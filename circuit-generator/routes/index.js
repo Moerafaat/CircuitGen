@@ -68,9 +68,6 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    			builder.ProperLayering(); // Dummy nodes placement
 	    			builder.CrossingReduction(); // Crossing reduction
 
-	    			var dimensions = builder.GetDimensions(); // Get width and height
-	    			//console.log(dimensions);
-
 	    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
 	    			res.render('circuit', { title: 'Circuit',
 	    									error: '',
