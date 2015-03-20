@@ -77,7 +77,7 @@ joint.shapes.logic.Repeater.prototype.onSignal = function(signal, handler) { _.d
 joint.shapes.logic.Output.prototype.onSignal = function(signal) { toggleLive(this, signal); }
 
 // diagramm setup
-gates = {
+/*gates = {
     repeater: new joint.shapes.logic.Repeater({ position: { x: 350, y: 50 }}),
     or: new joint.shapes.logic.Or({ position: { x: 550, y: 50 }}),
     and: new joint.shapes.logic.And({ position: { x: 550, y: 150 }}),
@@ -96,7 +96,7 @@ var wires = [
     { source: { id: gates.nor.id, port: 'out' }, target: { id: gates.repeater.id, port: 'in' }},
     { source: { id: gates.nor.id, port: 'out' }, target: { id: gates.output.id, port: 'in' }},
     { source: { id: gates.repeater.id, port: 'out' }, target: { id: gates.nor.id, port: 'in2'}, vertices: [{ x: 300, y: 220 }]}
-];
+];*/
 
 // add gates and wires to the graph
 
@@ -109,6 +109,13 @@ graph.on('change:source change:target', function(model, end) {
         current = initializeSignal();
     }
 });
+
+graph.on('change:position', function(cell) {
+    console.log(cell);
+    // has an obstacle been moved? Then reroute the link.
+    //if (_.contains(obstacles, cell)) paper.findViewByModel(link).update();
+});
+
 
 graph.on('change:signal', function(wire, signal) {
 
