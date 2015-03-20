@@ -4,6 +4,8 @@ function plotGraph(gGates, gWires, map){
     var graphWires = [];
     var idToIndexMap = [];
     for(i = 0; i < gGates.length; i++){
+           if(gGates[i].dummy)
+                continue;
            idToIndexMap[gGates[i].id] = i;
            if (!gGates[i].xLayout || !gGates[i].yLayout)
                 graphGates[gGates[i].id] = new joint.shapes.logic[map[gGates[i].model]]({position: {x: 60*i, y: 60*i}});
