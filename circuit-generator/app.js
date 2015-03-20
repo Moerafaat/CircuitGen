@@ -31,7 +31,7 @@ app.use(multer({
     dest:                   './temp_uploads/',
 
     limits:                 {
-                                fileSize: 32768
+                                fileSize: 4000000
                             },
     onFileUploadStart:      function (file, req, res) {
                                 console.log(file.fieldname + ' is starting ...');

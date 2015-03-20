@@ -27,15 +27,19 @@ function getGatesRegEx(){
 }
 
 function getWireRegEx(identifier){
-	return new RegExp('^\\s*' + identifier + '\\s+([\\d\\w]+)\\s*$', 'gm');
+	return new RegExp('^\\s*' + identifier + '\\s+(\\S+)\\s*$', 'gm');
 }
 
 function getBusRegEx(identifier){
-	return new RegExp('^\\s*' +  identifier + '\\s*\\[(\\d+):(\\d+)\\]\\s*([\\d\\w]+)\\s*$', 'gm');
+	return new RegExp('^\\s*' +  identifier + '\\s*\\[(\\d+):(\\d+)\\]\\s*(\\S+)\\s*$', 'gm');
 }
 
 function getParamRegEx(){
-	return new RegExp('^\\s*\\.(\\w)\\((.*)\\)\\s*$', 'gm');
+	return new RegExp('^\\s*\\.(\\S)\\((.*)\\)\\s*$', 'gm');
+}
+
+function getAssignRegEx(){
+	return new RegExp('\\s*assign\\s*(\\S+)\\s*=\\s*(\\S+)\\s*', 'gm');
 }
 
 
@@ -74,8 +78,21 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 	var outputs = [];
 	var gates = [];
 
-	for(i = 0; i < lines.length; i++){
+	var handleAssign = function(){
+		for(var i = 0; i < lines.length; i++){
+			lines[i] = lines[i].trim();
+			var assignRegex = getAssignRegEx();
+			if (assignRegex.test(lines[i])){
+				console.log('Assing: ' + lines[i]);
+				lines.splice(i--, 1);
+			}
+		}
+	}
+
+	for(var i = 0; i < lines.length; i++){ //Parsing wires.
 		lines[i] = lines[i].trim();
+		if (lines[i] == '')
+			continue;
 
 		var wireRegex = getWireRegEx('wire'); //RegEx: Capturing wire.
 		var busRegex = getBusRegEx('wire'); //RegEx: Capturing bus.
@@ -83,7 +100,6 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 		var inputBusRegex =  getBusRegEx('input'); //RegEx: Capturing input bus.
 		var outputRegex = getWireRegEx('output'); //RegEx: Capturing output.
 		var outputBusRegex = getBusRegEx('output'); //RegEx: Capturing output bus.
-		var gatesRegex = getGatesRegEx(); //RegEx: Capturing And gate.
 
 		if (wireRegex.test(lines[i])){ //Parsing single wire.
 			var wireRegex = getWireRegEx('wire');
@@ -241,7 +257,20 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 				}
 			}
 			//console.log('Output Bus [' + busMSB + ':' + busLSB + '] ' + busName);
-		}else if (gatesRegex.test(lines[i])){ //Parsing modules.
+		}else 
+			break;
+		lines.splice(i--, 1);
+		
+	}
+
+	handleAssign();
+
+	for(var i = 0; i < lines.length; i++){ //Parsing gates.
+		lines[i] = lines[i].trim();
+		if (lines[i] == '')
+			continue;
+		var gatesRegex = getGatesRegEx(); //RegEx: Capturing logical gate.
+		if (gatesRegex.test(lines[i])){ //Parsing modules.
 			var moduleInstance = lines[i];
 			moduleInstance = moduleInstance.trim().replace(/\r\n/g, '').trim(); //Stripping module.
 			var gatesRegex = getGatesRegEx(); 
@@ -309,8 +338,10 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 			gates.push(newGate);		
 			//console.log('*******');
 
+		}else{
+			console.log('Invalid line ' + lines[i]);
+			warnings.push('Invalid line ' + lines[i] + ', ignored while parsing');
 		}
-		
 	}
 	
 	/*for(var i = 0; i < gates.length; i++){
@@ -365,17 +396,17 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 				if (inputIndex != -1){
 					//console.log('Trimming ' + allWires[i].toString() + ' from inputs ');
 					//console.log(gates[j]);
-					gates[j].inputs.splice(inputIndex);
+					gates[j].inputs.splice(inputIndex, 1);
 					//console.log(gates[j]);
 				}
 				if(outputIndex != -1){
 					//console.log('Trimming ' + allWires[i].toString() + ' from outputs ');
 					//console.log(gates[j]);
-					gates[j].outputs.splice(outputIndex);
+					gates[j].outputs.splice(outputIndex, 1);
 					//console.log(gates[j]);
 				}
 			}
-			allWires.splice(i);
+			allWires.splice(i, 1);
 			i--;
 		}
 

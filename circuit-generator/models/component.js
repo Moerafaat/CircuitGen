@@ -24,7 +24,7 @@ var WireType = {
 	CONNECTION: 2
 };
 
-var VerilogToJointMap={
+var VerilogToJointMap = {
 	and: 'And',
 	nand: 'Nand',
 	or: 'Or',

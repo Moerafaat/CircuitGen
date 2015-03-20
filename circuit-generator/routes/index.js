@@ -41,11 +41,6 @@ router.get('/about', function(req, res){ //Netlist upload view.
 });
 
 
-router.get('/ui', function(req, res){ //Netlist upload view.
-	res.render('index', {title: 'Netlist Circuit Generator'});
-});
-
-
 router.post('/circuit', function(req, res){ //Netlist file parser.
 	//console.log(req.files.netlist);
 	var filePath = './' + req.files.netlist.path; //Full file path.
@@ -73,8 +68,6 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    			builder.ProperLayering();
 	    			builder.CrossingReduction();
 	    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
-
-	    			console.log(graphMapper);
 
 	    			res.render('circuit', { title: 'Circuit',
 	    									error: '',
