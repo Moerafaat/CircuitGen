@@ -15,7 +15,7 @@ This projects aims at desiging a web tool to analyze logic circuit, adjust the l
 * File processing (*Complete*).
 * Netlist parsing (*Complete*).
 * Establishing components objects and connections(*Complete*).
-* Topological sorting and placement level analysis for each component (*In Progress*).
-* UI design using AlloyUI (*In Progress*).
+* Topological sorting and placement level analysis for each component (*Complete*).
+* UI design(*Complete*).
 * Circuit graphing using Joint.js(*Complete*).
 * Customizing netlist parsing using EDIF file (*not guaranteed in the given timeframe, infrastructure ready*).
