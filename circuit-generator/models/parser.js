@@ -329,7 +329,7 @@ module.exports.parse = function parse(content, callback){ //Netlist parsing func
 		console.log('**********');
 	}*/
 
-	var allWires = [];
+	var allWires = new Array();
 	for(key in wires){
 		//console.log(key + ' : ' + wires[key].id);
 		allWires.push(wires[key]);
@@ -342,10 +342,11 @@ module.exports.parse = function parse(content, callback){ //Netlist parsing func
 		//console.log(key + ' : ' + outputs[key].id);
 		allWires.push(outputs[key]);
 	}
-	
-	
 
 		//console.log(allWires);
+		//console.log(typeof(allWires));
+		//console.log(Array);
+		//console.log(Array.prototype);
 		//console.log(allWires.length);
 		//console.log('----------');
 		//console.log(gates);

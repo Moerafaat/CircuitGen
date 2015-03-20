@@ -5,6 +5,7 @@ var router = express.Router();
 
 var Component = require('../models/component');
 var Parser = require('../models/parser');
+var GraphBuilder = require('../models/graph_builder');
 var wire = Component.wire;
 var and = Component.and;
 var nand = Component.nand;
@@ -61,7 +62,9 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    			res.status(500).send(err);
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}else{
-
+	    			var builder = new GraphBuilder(gates);
+	    			builder.LongestPathLayering();
+	    			builder.ProperLayering();
 	    			var graphMapper = { //Mapping gates to logic digarams.
 	    					AND2X1: 'And',
 							AND2X2: 'And',
