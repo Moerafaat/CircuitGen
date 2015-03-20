@@ -11,6 +11,8 @@ var multer  = require('multer'); //Multer for file upload.
 var routes = require('./routes/index');
 
 var app = express();
+app.use(favicon(__dirname + '/public/images/favicon.ico'));
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -29,7 +31,7 @@ app.use(multer({
     dest:                   './temp_uploads/',
 
     limits:                 {
-                                fileSize: 32768
+                                fileSize: 4000000
                             },
     onFileUploadStart:      function (file, req, res) {
                                 console.log(file.fieldname + ' is starting ...');

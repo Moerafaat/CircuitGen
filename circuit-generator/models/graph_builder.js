@@ -1,3 +1,5 @@
+/*Graph Builder Model*/
+
 var Component = require('./component');
 
 var GraphBuilder = function(gates){
@@ -138,12 +140,12 @@ GraphBuilder.prototype.CrossingReduction = function(){
 		}
 	}
 
-	console.log("X and Y");
+	/*console.log("X and Y");
 	for(var i=0; i<this.layers.length; i++){
 		for(var j=0; j<this.layers[i].length; j++){
 			console.log("GATE: " + this.layers[i][j] + " X: " + this.gates[this.layers[i][j]].x + " Y: " + this.gates[this.layers[i][j]].y);
 		}
-	}
+	}*/
 	// Cross Reduced Properly Layered DAG constructed
 };
 

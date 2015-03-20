@@ -13,6 +13,7 @@ var or =Component.or;
 var nor = Component.nor;
 var xor = Component.xor;
 var not = Component.not;
+var edif = Component.EDIF;
 
 function countArray(obj){ //Key-value array size counter.
 	var size = 0, key;
@@ -40,11 +41,6 @@ router.get('/about', function(req, res){ //Netlist upload view.
 });
 
 
-router.get('/ui', function(req, res){ //Netlist upload view.
-	res.render('index', {title: 'Netlist Circuit Generator'});
-});
-
-
 router.post('/circuit', function(req, res){ //Netlist file parser.
 	//console.log(req.files.netlist);
 	var filePath = './' + req.files.netlist.path; //Full file path.
@@ -56,10 +52,15 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	        fs.unlink(filePath); //Deleting uploaded file.
 	    }else{
 	    	content = data;
-	    	Parser.parse(content, function(err, gates, wires){
+	    	Parser.parse(content, null, function(err, gates, wires, warnings){
 	    		if(err){
 	    			console.log(err);
-	    			res.status(500).send(err);
+	    			res.render('circuit', { title: 'Circuit',
+	    									error: err,
+	    									graphGates: JSON.stringify([]),
+	    									graphWires: JSON.stringify([]),
+	    									graphMapper: JSON.stringify([]),
+	    									content: content});
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}else{
 	    			var builder = new GraphBuilder(gates);
@@ -68,23 +69,16 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    			builder.CrossingReduction(); // Crossing reduction
 
 	    			var dimensions = builder.GetDimensions(); // Get width and height
-	    			var graphMapper = { //Mapping gates to logic digarams.
-	    					AND2X1: 'And',
-							AND2X2: 'And',
-							NAND2X1:'Nand',
-							NAND2X2: 'Nand',
-							OR2X1: 'Or',
-							OR2X2: 'Or',
-							NOR2X1: 'Nor',
-							NOR2X2: 'Nor',
-							XOR2X1: 'Xor',
-							XOR2X2: 'Xor',
-							INVX1: 'Not',
-							InputPort: 'Input',
-							OutputPort: 'Output'
-	    			};
+	    			//console.log(dimensions);
 
-	    			res.render('circuit', {title: 'Circuit', graphGates: JSON.stringify(gates), graphWires: JSON.stringify(wires), graphMapper: JSON.stringify(graphMapper)});
+	    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
+	    			res.render('circuit', { title: 'Circuit',
+	    									error: '',
+	    									graphGates: JSON.stringify(gates),
+	    									graphWires: JSON.stringify(wires),
+	    									graphMapper: JSON.stringify(graphMapper),
+	    									warnings: JSON.stringify(warnings),
+	    									content: content});
 	    			//res.status(200).send(content);
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}

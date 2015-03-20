@@ -1,28 +1,36 @@
 0 info it worked if it ends with ok
-1 verbose cli [ '/home/mohammed/.nvm/v0.10.35/bin/node',
-1 verbose cli   '/home/mohammed/.nvm/v0.10.35/bin/npm',
-1 verbose cli   'start' ]
-2 info using npm@1.4.28
-3 info using node@v0.10.35
-4 verbose run-script [ 'prestart', 'start', 'poststart' ]
-5 info prestart circuit-generator@0.0.0
-6 info start circuit-generator@0.0.0
-7 verbose unsafe-perm in lifecycle true
-8 info circuit-generator@0.0.0 Failed to exec start script
-9 error circuit-generator@0.0.0 start: `node ./bin/www`
-9 error Exit status 8
-10 error Failed at the circuit-generator@0.0.0 start script.
-10 error This is most likely a problem with the circuit-generator package,
-10 error not with npm itself.
-10 error Tell the author that this fails on your system:
-10 error     node ./bin/www
-10 error You can get their info via:
-10 error     npm owner ls circuit-generator
-10 error There is likely additional logging output above.
-11 error System Linux 3.13.0-46-generic
-12 error command "/home/mohammed/.nvm/v0.10.35/bin/node" "/home/mohammed/.nvm/v0.10.35/bin/npm" "start"
-13 error cwd /home/mohammed/Documents/Workspace/GitHub/CircuitGen/circuit-generator
-14 error node -v v0.10.35
-15 error npm -v 1.4.28
-16 error code ELIFECYCLE
-17 verbose exit [ 1, true ]
+1 verbose cli [ 'node', '/usr/bin/npm', 'start' ]
+2 info using npm@2.3.0
+3 info using node@v0.10.33
+4 verbose node symlink /usr/bin/node
+5 verbose run-script [ 'prestart', 'start', 'poststart' ]
+6 info prestart circuit-generator@0.0.0
+7 info start circuit-generator@0.0.0
+8 verbose unsafe-perm in lifecycle true
+9 info circuit-generator@0.0.0 Failed to exec start script
+10 verbose stack Error: circuit-generator@0.0.0 start: `node ./bin/www`
+10 verbose stack Exit status 8
+10 verbose stack     at EventEmitter.<anonymous> (/usr/lib/node_modules/npm/lib/utils/lifecycle.js:213:16)
+10 verbose stack     at EventEmitter.emit (events.js:98:17)
+10 verbose stack     at ChildProcess.<anonymous> (/usr/lib/node_modules/npm/lib/utils/spawn.js:14:12)
+10 verbose stack     at ChildProcess.emit (events.js:98:17)
+10 verbose stack     at maybeClose (child_process.js:756:16)
+10 verbose stack     at Process.ChildProcess._handle.onexit (child_process.js:823:5)
+11 verbose pkgid circuit-generator@0.0.0
+12 verbose cwd /home/ahmed/Documents/Git/CircuitGen/circuit-generator
+13 error Linux 3.13.0-46-generic
+14 error argv "node" "/usr/bin/npm" "start"
+15 error node v0.10.33
+16 error npm  v2.3.0
+17 error code ELIFECYCLE
+18 error circuit-generator@0.0.0 start: `node ./bin/www`
+18 error Exit status 8
+19 error Failed at the circuit-generator@0.0.0 start script 'node ./bin/www'.
+19 error This is most likely a problem with the circuit-generator package,
+19 error not with npm itself.
+19 error Tell the author that this fails on your system:
+19 error     node ./bin/www
+19 error You can get their info via:
+19 error     npm owner ls circuit-generator
+19 error There is likely additional logging output above.
+20 verbose exit [ 1, true ]
