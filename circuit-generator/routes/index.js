@@ -89,7 +89,12 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 		    			var wiresMap = {};
 		    			for(var i = 0; i < wires.length; i++)
 		    				wiresMap[wires[i].id] = wires[i];
-		    
+		    			var al = GraphingMaterial.adjaceny_list;
+		    			for(var i = 0; i < al.length; i++){
+		    				console.log(i +':');
+		    				console.log(al[i]);
+		    			}
+
  		    			res.render('circuit', { title: 'Circuit',
 		    									error: '',
 		    									graphGates: JSON.stringify(GraphingMaterial.gates),
