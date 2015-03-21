@@ -21,7 +21,7 @@ function multipleOccur(array, element){
 }
 
 function plotGraph(gGates, gWires, map, connections){
-    //var router = 'None';
+    //var router = '';
     var connector = 'rounded';
     var graphGates = {};
     var graphWires = [];
@@ -42,11 +42,8 @@ function plotGraph(gGates, gWires, map, connections){
             if(sourceGate.dummy)
               continue;
             var gWire = gWires[i];
-            //console.log('Connections of: ');
-            //console.log(sourceGate.model);
             for(var l = 0; l < gWire.length; l++){
               var targetGate = gGates[gWire[l]];
-              //console.log('Target: ' + targetGate.model + '  ' + targetGate.dummy);
               if (!targetGate.dummy){
                      if (targetGate.inputs.length == 1)
                         graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
@@ -55,7 +52,6 @@ function plotGraph(gGates, gWires, map, connections){
                                          connector: {name: connector}});
                      else if(targetGate.inputs.length == 2){
                         if(multipleOccur(targetGate.inputs, targetGate.inputs[0])){
-                          //console.log('Same input twice for ' + targetGate.model);
                           var firstInputWire = connections[targetGate.inputs[0]];
                           var secondInputWire = connections[targetGate.inputs[1]];
                           var firstInput = gGates[idToIndexMap[firstInputWire.inPort]];
@@ -110,7 +106,6 @@ function plotGraph(gGates, gWires, map, connections){
                       if (targetGate.inputs.length == 1)
                         graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
                                          target:{id: graphGates[targetGate.id].id, port:'in'},
-                                         /*router: {name: router},*/
                                          connector: {name: connector},
                                          vertices: wireVerts});
                      else if(targetGate.inputs.length == 2){
@@ -141,13 +136,11 @@ function plotGraph(gGates, gWires, map, connections){
                           if(typeof firstInput !== 'undefined' && firstInput.id == sourceGate.id){
                               graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
                                          target:{id: graphGates[targetGate.id].id, port:'in1'},
-                                         /*router: {name: router},*/
                                          connector: {name: connector},
                                          vertices: wireVerts});
                           }else if (typeof secondInput !== 'undefined' && secondInput.id == sourceGate.id){
                               graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
                                          target:{id: graphGates[targetGate.id].id, port:'in2'},
-                                         /*router: {name: router},*/
                                          connector: {name: connector},
                                          vertices: wireVerts});
                           }else

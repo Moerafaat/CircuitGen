@@ -42,7 +42,6 @@ router.get('/about', function(req, res){ //Netlist upload view.
 
 
 router.post('/circuit', function(req, res){ //Netlist file parser.
-	//console.log(req.files.netlist);
 	var filePath = './' + req.files.netlist.path; //Full file path.
 	var content; //File content holder.
 	fs.readFile(filePath, 'utf8', function read(err, data) { //Reading file content.
@@ -63,7 +62,6 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    									content: content});
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}else{
-	    			//console.log(gates);
 	    			var builder = new GraphBuilder(gates);
 	    			builder.LongestPathLayering(); // Layering of the DAG
 	    			builder.ProperLayering(); // Dummy nodes placement
@@ -90,7 +88,6 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    									connectionWires: JSON.stringify(wiresMap),
 	    									warnings: JSON.stringify(warnings),
 	    									content: content});
-	    			//res.status(200).send(content);
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}
 	    	}); //Parsing file content.

@@ -392,7 +392,6 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 					}
 				}
 			}
-			//console.log('Output Bus [' + busMSB + ':' + busLSB + '] ' + busName);
 		}else 
 			break;
 		lines.splice(i--, 1);
@@ -411,15 +410,9 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 			moduleInstance = moduleInstance.trim().replace(/\r\n/g, '').trim(); //Stripping module.
 			var gatesRegex = getGatesRegEx(); 
 			var gateComponents = gatesRegex.exec(moduleInstance); //Geting module tokens.
-			//console.log(gateComponents);
 			var instanceModel = gateComponents[1].trim(); //Gate model.
 			var instanceName = gateComponents[2].trim(); //Module name.
 			var gateConnections = gateComponents[3].replace(/\r\n/g, '').replace(/\s+/g, ''); //Extracting connections.
-			/*console.log('------');
-			console.log('Model: ' + instanceModel);
-			console.log('Name: ' + instanceName);
-			console.log('Connections: ' + gateConnections);
-			console.log('------');*/
 			var connectionTokens = gateConnections.split(',');
 			var gateInputs = [];
 			var gateOuputs = [];
@@ -431,20 +424,16 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 			}
 
 			var newGate = new Component[EDIFModel.primitive](instanceModel);
-			//console.log(moduleInstance);
 			for (var p = 0; p < connectionTokens.length; p++) { //Establishing connections.
 				var paramRegex = getParamRegEx();
 				var matchedTokens = paramRegex.exec(connectionTokens[p]);
 				var portName = matchedTokens[1];
 				var wireName = matchedTokens[2];
-				//console.log('Token: ' + portName);
 				if(EDIFModel.inputPorts.indexOf(portName) != -1){ //Establishing input connection.
 					if (typeof wires[wireName] !== 'undefined'){
-						//console.log('Setting input: ' + JSON.stringify(wires[wireName]));
 						newGate.addInput(wires[wireName].id);
 						wires[wireName].addOutput(newGate.id);
 					}else if (typeof inputs[wireName] !== 'undefined'){
-						//console.log('Setting input: ' + JSON.stringify(inputs[wireName]));
 						newGate.addInput(inputs[wireName].id);
 						inputs[wireName].addOutput(newGate.id);
 					}else{
@@ -453,11 +442,9 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 					}
 				}else if (EDIFModel.outputPorts.indexOf(portName) != -1){ //Establishing output connection.
 					if (typeof wires[wireName] !== 'undefined'){
-						//console.log('Setting output: ' + JSON.stringify(wires[wireName]));
 						newGate.addOutput(wires[wireName].id);
 						wires[wireName].setInput(newGate.id);
 					}else if (typeof outputs[wireName] !== 'undefined'){
-						//console.log('Setting output: ' + JSON.stringify(outputs[wireName]));
 						newGate.addOutput(outputs[wireName].id);
 						outputs[wireName].setInput(newGate.id);
 					}else{
@@ -471,7 +458,6 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 				
 			}
 			gates.push(newGate);		
-			//console.log('*******');
 
 		}else{
 			console.log('Invalid line ' + lines[i]);
@@ -479,23 +465,7 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 		}
 	}
 	
-	/*for(var i = 0; i < gates.length; i++){
-		console.log(i + ':  ' + gates[i].model  + '(' + gates[i].id + ') connections: ');
 
-		var gateInputs = gates[i].inputs;
-		if (typeof gateInputs === 'undefined' || gateInputs.length == 0)
-			continue;
-		for(var j = 0; j < gateInputs.length; j++)
-			console.log('Input: ' + gates[i].getInputGate(j).toString());
-
-		var gateOutputs = gates[i].outputs;
-		if (typeof gateOutputs === 'undefined' || gateOutputs.length == 0)
-			continue;
-		for(var j = 0; j < gateOutputs.length; j++){
-			console.log('Outputs(' + j + '): ' + gates[i].getOutputGates(j).toString());
-		}
-		console.log('**********');
-	}*/
 
 	var allWires = new Array();
 	for(key in wires){
@@ -511,15 +481,7 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 		allWires.push(outputs[key]);
 	}
 
-		//console.log(allWires);
-		//console.log(typeof(allWires));
-		//console.log(Array);
-		//console.log(Array.prototype);
-		//console.log(allWires.length);
-		//console.log('----------');
-		//console.log(gates);
-		//console.log('-*-*-*-*-*-*-*-*-*-');
-
+		
 		for(i = 0; i < allWires.length; i++)
 		if (allWires[i].isFlyingWire()){
 			console.log('Warning, flying wire ');
@@ -529,16 +491,10 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 				var inputIndex = gates[j].inputs.indexOf(allWires[i].id);
 				var outputIndex = gates[j].outputs.indexOf(allWires[i].id);
 				if (inputIndex != -1){
-					//console.log('Trimming ' + allWires[i].toString() + ' from inputs ');
-					//console.log(gates[j]);
 					gates[j].inputs.splice(inputIndex, 1);
-					//console.log(gates[j]);
 				}
 				if(outputIndex != -1){
-					//console.log('Trimming ' + allWires[i].toString() + ' from outputs ');
-					//console.log(gates[j]);
 					gates[j].outputs.splice(outputIndex, 1);
-					//console.log(gates[j]);
 				}
 			}
 			allWires.splice(i, 1);
