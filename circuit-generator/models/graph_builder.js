@@ -175,7 +175,9 @@ GraphBuilder.prototype.CrossingReduction = function(){
 		}
 	}
 
-	this.RestoreCycles(); // Restore the original orientation of the graph
+	// Restore the original orientation of the graph
+	this.RestoreCycles();
+	this.RestoreDoubleCycles();
 	// Cross Reduced Properly Layered DAG constructed
 };
 
@@ -221,10 +223,24 @@ function BaryCenter(gates, adjaceny_list, layers, layer1, layer2, is_reversed){
 }
 
 GraphBuilder.prototype.RemoveDoubleCycles = function(){
-	
+	for(var i=0; i<this.adjaceny_list.length; i++){
+		for(var j=0; j<this.adjaceny_list[i].length; j++){
+			var index;
+			index = this.adjaceny_list[this.adjaceny_list[i][j]].indexOf(i);
+			if(index != -1){ // 2-Cycle
+				this.adjaceny_list[this.adjaceny_list[i][j]].splice(index, 1);
+				this.double_cycles.push({
+					parent: this.adjaceny_list[i][j],
+					child: i
+				});
+			}
+		}
+	}
 };
 
 GraphBuilder.prototype.CyclesRemoval = function(){
+	this.RemoveDoubleCycles(); // Removing Double Cycles
+
 	var left = new Array();
 	var right = new Array();
 	var recheck_sink, recheck_source;
@@ -356,6 +372,12 @@ GraphBuilder.prototype.RestoreCycles = function(){
 			index = this.adjaceny_list[this.reversed_edges[i].path[j]].indexOf(this.reversed_edges[i].path[j-1]);
 			this.adjaceny_list[this.reversed_edges[i].path[j]].splice(index, 1);
 		}
+	}
+};
+
+GraphBuilder.prototype.RestoreDoubleCycles = function(){
+	for(var i=0; i<this.double_cycles.length; i++){
+		this.adjaceny_list[this.double_cycles[i].parent].push(this.double_cycles[i].child);
 	}
 };
 

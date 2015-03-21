@@ -11,8 +11,9 @@ module booth_encoder(a, b);
         .B(w[3]),
         .Y(w[1])
     );
-    INVX1 g2 (
+    AND2X1 g2 (
         .A(w[1]),
+		.B(w[3]),
         .Y(w[2])
     );
     INVX1 g3 (
