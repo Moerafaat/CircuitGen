@@ -29,6 +29,7 @@ function plotGraph(gGates, gWires, map, connections){
     for(var i = 0; i < gGates.length; i++){
            if(gGates[i].dummy)
                 continue;
+              
            idToIndexMap[gGates[i].id] = i;
            if (!gGates[i].xLayout || !gGates[i].yLayout)
                 graphGates[gGates[i].id] = new joint.shapes.logic[map[gGates[i].model]]({position: {x: 60*i, y: 60*i}});
@@ -92,15 +93,11 @@ function plotGraph(gGates, gWires, map, connections){
                       var dummyGateIndexIndex = gWire[l];
                       var dummyGateIndex = gWires[dummyGateIndexIndex][0];
                       var targetGate = gGates[dummyGateIndex];
-                      //console.log('Reached: ');
-                      //console.log(targetGate);
                       while(targetGate.dummy){
                         wireVerts.push({x: targetGate.x, y: targetGate.y});
-                        dummyGateIndexIndex = gWires[dummyGateIndex][0];
-                        dummyGateIndex = gWires[dummyGateIndexIndex][0];
+                        dummyGateIndex = gWires[dummyGateIndex][0];
                         targetGate = gGates[dummyGateIndex];
                       }
-                      //console.log(wireVerts);
 
                       if (targetGate.inputs.length == 1)
                         graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
