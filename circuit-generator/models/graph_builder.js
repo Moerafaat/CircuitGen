@@ -8,6 +8,7 @@ var GraphBuilder = function(gates){
 	this.gates = gates;
 	this.adjaceny_list = new Array(gates.length); // Adjaceny list to build DAG
 	this.reversed_edges = new Array();
+	this.double_cycles = new Array();
 
 	// Starting values for absolute graphing
 	this.width = 0;
@@ -42,7 +43,6 @@ GraphBuilder.prototype.LongestPathLayering = function(){ // Assigning the x-coor
 	var current_layer = 0;
 
 	while(assigned.length < this.gates.length){
-		console.log(assigned.length);
 		var selected = false;
 		for(var i=0; i<this.gates.length; i++){
 			if(assigned.indexOf(i) == -1){ // Not assigned
@@ -220,6 +220,10 @@ function BaryCenter(gates, adjaceny_list, layers, layer1, layer2, is_reversed){
 	layers[layer2].sort(compareY(gates)); // Sort by barycenter
 }
 
+GraphBuilder.prototype.RemoveDoubleCycles = function(){
+	
+};
+
 GraphBuilder.prototype.CyclesRemoval = function(){
 	var left = new Array();
 	var right = new Array();
@@ -245,7 +249,7 @@ GraphBuilder.prototype.CyclesRemoval = function(){
 	}
 	for(var i=0; i<temp_graph.length; i++){
 		for(var j=0; j<temp_graph[i].length; j++){
-			reverse_graph[j].push(i);
+			reverse_graph[temp_graph[i][j]].push(i);
 		}
 	}
 
@@ -320,8 +324,8 @@ GraphBuilder.prototype.CyclesRemoval = function(){
 	}
 	node_sequence = left.concat(right); // Generate node sequence
 	var index, index1, index2;
-	for(var i=0; i<this.adjaceny_list; i++){
-		for(var j=0; j<this.adjaceny_list[i]; j++){
+	for(var i=0; i<this.adjaceny_list.length; i++){
+		for(var j=0; j<this.adjaceny_list[i].length; j++){
 			index1 = node_sequence.indexOf(i);
 			index2 = node_sequence.indexOf(this.adjaceny_list[i][j]);
 			if(index1 > index2){ // Edge to be reversed
@@ -345,10 +349,10 @@ GraphBuilder.prototype.CyclesRemoval = function(){
 GraphBuilder.prototype.RestoreCycles = function(){
 	var index;
 	for(var i=0; i<this.reversed_edges.length; i++){
-		for(var j=0; j<this.reversed_edges.path.length-1; j++){
+		for(var j=0; j<this.reversed_edges[i].path.length-1; j++){
 			this.adjaceny_list[this.reversed_edges[i].path[j]].push(this.reversed_edges[i].path[j+1]);
 		}
-		for(var j=this.reversed_edges.path.length-1; j>0; j--){
+		for(var j=this.reversed_edges[i].path.length-1; j>0; j--){
 			index = this.adjaceny_list[this.reversed_edges[i].path[j]].indexOf(this.reversed_edges[i].path[j-1]);
 			this.adjaceny_list[this.reversed_edges[i].path[j]].splice(index, 1);
 		}
@@ -393,7 +397,7 @@ GraphBuilder.prototype.AssignAbsoluteValues = function(settings){
 		}
 	}
 
-	for(var i=0; i<this.layers.length; i++){
+	/*for(var i=0; i<this.layers.length; i++){
 		for(var j=0; j<this.layers[i].length; j++){
 			console.log("GATE: " + this.layers[i][j]
 				+ " AX: " + this.gates[this.layers[i][j]].rx
@@ -401,7 +405,7 @@ GraphBuilder.prototype.AssignAbsoluteValues = function(settings){
 				+ " X: " + this.gates[this.layers[i][j]].x
 				+ " Y: " + this.gates[this.layers[i][j]].y);
 		}
-	}
+	}*/
 
 	// An object with the required data to plot the circuit
 	return {
