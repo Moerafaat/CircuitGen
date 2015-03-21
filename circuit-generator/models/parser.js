@@ -8,7 +8,9 @@ var nand = Component.nand;
 var or =Component.or;
 var nor = Component.nor;
 var xor = Component.xor;
+var xnor = Component.xnor;
 var not = Component.not;
+var buf = Component.buf;
 var inputPort = Component.input;
 var outputPort = Component.output;
 var WireType = Component.WireType;
@@ -36,7 +38,7 @@ function getBusRegEx(identifier){
 }
 
 function getParamRegEx(){
-	return new RegExp('^\\s*\\.(\\S)\\((.*)\\)\\s*$', 'gm');
+	return new RegExp('^\\s*\\.(\\S+)\\(\\s*(.*)\\s*\\)\\s*$', 'gm');
 }
 
 function getAssignRegEx(){
@@ -433,7 +435,6 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 			for (var p = 0; p < connectionTokens.length; p++) { //Establishing connections.
 				var paramRegex = getParamRegEx();
 				var matchedTokens = paramRegex.exec(connectionTokens[p]);
-				
 				var portName = matchedTokens[1];
 				var wireName = matchedTokens[2];
 				//console.log('Token: ' + portName);

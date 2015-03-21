@@ -14,7 +14,9 @@ var Type = {
 	BUS: 7,
 	INPORT: 8,
 	OUTPORT: 9,
-	BUF: 10
+	BUF: 10,
+	XNOR: 11,
+	DFF: 12,
 };
 module.exports.Type = Type;
 
@@ -30,8 +32,10 @@ var VerilogToJointMap = {
 	or: 'Or',
 	nor: 'Nor',
 	xor: 'Xor',
+	xnor: 'Xnor',
 	not: 'Not',
 	buf: 'Repeater',
+	dff: 'Dff',
 	InputPort: 'Input',
 	OutputPort: 'Output'
 };
@@ -70,6 +74,15 @@ function getGateName(gate){
 			break;
 		case Type.OUTPORT:
 			name = 'output port';
+			break;
+		case Type.XNOR:
+			name = 'xnor';
+			break;
+		case Type.BUF:
+			name - 'buf';
+			break;
+		case Type.DFF:
+			name - 'dff';
 			break;
 		default:
 			name = 'unknown';
@@ -291,6 +304,15 @@ function xor(model, inputs, outputs){
 	this.addGate(this);
 }
 
+xnor.prototype = new Component();  //Xor gate model.
+xnor.prototype.constructor = xnor;
+function xnor(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.XNOR;
+	this.model = model;
+	this.addGate(this);
+}
+
 not.prototype = new Component(); //Not gate model.
 not.prototype.constructor = not;
 function not(model, inputs, outputs){
@@ -305,6 +327,15 @@ buf.prototype.constructor = buf;
 function buf(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
 	this.type = Type.BUF;
+	this.model = model;
+	this.addGate(this);
+}
+
+dff.prototype = new Component(); //Buffer gate model.
+dff.prototype.constructor = dff;
+function dff(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.type = Type.DFF;
 	this.model = model;
 	this.addGate(this);
 }
@@ -337,8 +368,10 @@ module.exports.nand = nand;
 module.exports.or = or;
 module.exports.nor = nor;
 module.exports.xor = xor;
+module.exports.xnor = xnor;
 module.exports.not = not;
 module.exports.buf = buf;
+module.exports.dff = dff;
 module.exports.input = input;
 module.exports.output = output;
 
@@ -533,6 +566,12 @@ module.exports.EDIF = {
 		outputPorts: ['Y'],
 		primitive: 'xor'
 	},
+	XNOR2X1: {
+		name: 'XNOR2X1',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'xnor'
+	},
 	INVX1:{
 		name: 'INVX1',
 		inputPorts: ['A'],
@@ -551,6 +590,12 @@ module.exports.EDIF = {
 		outputPorts: ['Y'],
 		primitive: 'buf'
 	},
+	DFF: {
+		name: 'DFF',
+		inputPorts: ['A', 'CLK'],
+		outputPorts: ['Y'],
+		primitive: 'dff'
+	},
 	getJointMap: function(){
 		var map = {};
 		for (key in this){
@@ -563,3 +608,99 @@ module.exports.EDIF = {
 		return map;
 	}
 };
+
+/*module.exports.EDIF = {
+	AND2X1: {
+		name: 'AND2X1',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'and'
+	},
+	AND2X2:{
+		name: 'AND2X2',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'and'
+	},
+	NAND2X1:{
+		compound: true,
+		code:''
+	},
+	OR2X1:{
+		name: 'OR2X1',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'or'
+	},
+	OR2X2:{
+		name: 'OR2X2',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'or'
+	},
+	NOR2X1: {
+		name: 'NOR2X1',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'nor'
+	},
+	NOR2X2: {
+		name: 'NOR2X2',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'nor'
+	},
+	XOR2X1: {
+		name: 'XOR2X1',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'xor'
+	},
+	XOR2X2: {
+		name: 'XOR2X2',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'xor'
+	},
+	XNOR2X1: {
+		name: 'XNOR2X1',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'xnor'
+	},
+	INVX1:{
+		name: 'INVX1',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'not'
+	},
+	BUFX2:{
+		name: 'BUFX2',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'buf'
+	},
+	BUFX4:{
+		name: 'BUFX4',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'buf'
+	},
+	DFF: {
+		name: 'DFF',
+		inputPorts: ['A', 'CLK'],
+		outputPorts: ['Y'],
+		primitive: 'dff'
+	},
+	getJointMap: function(){
+		var map = {};
+		for (key in this){
+			if (key == 'getJointMap')
+				continue;
+			map[key]= VerilogToJointMap[this[key].primitive];
+		}
+		map['InputPort'] = VerilogToJointMap['InputPort'];
+		map['OutputPort'] = VerilogToJointMap['OutputPort'];
+		return map;
+	}
+};*/
