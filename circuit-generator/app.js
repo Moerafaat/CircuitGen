@@ -1,4 +1,6 @@
 var express = require('express');
+var flash = require('express-flash');
+var session = require('express-session');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
@@ -13,6 +15,10 @@ var routes = require('./routes/index');
 var app = express();
 app.use(favicon(__dirname + '/public/images/favicon.ico'));
 
+app.set('trust proxy', 1) // trust first proxy 
+app.use(session({
+  secret: 'y9MXWKNiSKr3kdDACxNiSKr3kdDVPKACxNi'
+}))
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -25,6 +31,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(flash());
 
 //Configuring multer for file upload.
 app.use(multer({ 

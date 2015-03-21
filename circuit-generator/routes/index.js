@@ -1,6 +1,7 @@
 var express = require('express');
 var multer = require('multer');
 var fs = require('fs');
+var flash = require('connect-flash');
 var router = express.Router();
 
 var Component = require('../models/component');
@@ -33,7 +34,7 @@ function getKey(object, value){
 }
 
 router.get('/', function(req, res){ //Netlist upload view.
-	res.render('index', {title: 'Netlist Circuit Generator'});
+	res.render('index', {title: 'Netlist Circuit Generator', message: req.flash('error')});
 });
 
 router.get('/about', function(req, res){ //Netlist upload view.
@@ -42,60 +43,152 @@ router.get('/about', function(req, res){ //Netlist upload view.
 
 
 router.post('/circuit', function(req, res){ //Netlist file parser.
-	var filePath = './' + req.files.netlist.path; //Full file path.
-	var content; //File content holder.
-	fs.readFile(filePath, 'utf8', function read(err, data) { //Reading file content.
-	    if (err) {
-	    	console.log(err);
-	        res.status(500).send('Error');
-	        fs.unlink(filePath); //Deleting uploaded file.
-	    }else{
-	    	content = data;
-	    	Parser.parse(content, null, function(err, gates, wires, warnings){
-	    		if(err){
-	    			console.log(err);
-	    			res.render('circuit', { title: 'Circuit',
-	    									error: err,
-	    									graphGates: JSON.stringify([]),
-	    									graphWires: JSON.stringify([]),
-	    									graphMapper: JSON.stringify([]),
-	    									content: content});
-	    			fs.unlink(filePath); //Deleting processed file.
-	    		}else{
-	    			var builder = new GraphBuilder(gates);
-	    			builder.LongestPathLayering(); // Layering of the DAG
-	    			builder.ProperLayering(); // Dummy nodes placement
-	    			builder.CrossingReduction(); // Crossing reduction
-	    			
-	    			var graph_settings = {
-	    				max_comp_w: 100,
-	    				max_comp_h: 50,
-	    				layer_spacing: 150,
-	    				node_spacing: 50,
-	    				left_marg: 10,
-	    				top_marg: 10
-	    			};
-	    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
-	    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
-	    			var wiresMap = {};
-	    			for(var i = 0; i < wires.length; i++)
-	    				wiresMap[wires[i].id] = wires[i];
-	    			res.render('circuit', { title: 'Circuit',
-	    									error: '',
-	    									graphGates: JSON.stringify(GraphingMaterial.gates),
-	    									graphWires: JSON.stringify(GraphingMaterial.adjaceny_list),
-	    									graphMapper: JSON.stringify(graphMapper),
-	    									connectionWires: JSON.stringify(wiresMap),
-	    									warnings: JSON.stringify(warnings),
-	    									content: content});
-	    			fs.unlink(filePath); //Deleting processed file.
-	    		}
-	    	}); //Parsing file content.
-			
-			
-	    }
-	    
-	});
+	if(typeof(req.files.netlist) === 'undefined'){
+		console.log('No netlist uploaded');
+		req.flash('error', 'Select a Verilog netlist file to process.');
+		res.redirect('/');
+		return;
+	}
+	if (req.body.stdcells != 'custom'){
+		console.log('default');
+		var filePath = './' + req.files.netlist.path; //Full file path.
+		var content; //File content holder.
+		fs.readFile(filePath, 'utf8', function read(err, data) { //Reading file content.
+		    if (err) {
+		    	req.flash('error', 'Select a Verilog netlist file to process.');
+		        res.redirect('/');
+		        fs.unlink(filePath); //Deleting uploaded file.
+		    }else{
+		    	content = data;
+		    	Parser.parse(content, edif, function(err, gates, wires, warnings){
+		    		if(err){
+		    			console.log(err);
+		    			res.render('circuit', { title: 'Circuit',
+		    									error: err,
+		    									graphGates: JSON.stringify([]),
+		    									graphWires: JSON.stringify([]),
+		    									graphMapper: JSON.stringify([]),
+		    									content: content});
+		    			fs.unlink(filePath); //Deleting processed file.
+		    		}else{
+		    			var builder = new GraphBuilder(gates);
+		    			builder.LongestPathLayering(); // Layering of the DAG
+		    			builder.ProperLayering(); // Dummy nodes placement
+		    			builder.CrossingReduction(); // Crossing reduction
+		    			
+		    			var graph_settings = {
+		    				max_comp_w: 100,
+		    				max_comp_h: 50,
+		    				layer_spacing: 150,
+		    				node_spacing: 50,
+		    				left_marg: 10,
+		    				top_marg: 10
+		    			};
+		    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
+		    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
+		    			var wiresMap = {};
+		    			for(var i = 0; i < wires.length; i++)
+		    				wiresMap[wires[i].id] = wires[i];
+		    			res.render('circuit', { title: 'Circuit',
+		    									error: '',
+		    									graphGates: JSON.stringify(GraphingMaterial.gates),
+		    									graphWires: JSON.stringify(GraphingMaterial.adjaceny_list),
+		    									graphMapper: JSON.stringify(graphMapper),
+		    									connectionWires: JSON.stringify(wiresMap),
+		    									warnings: JSON.stringify(warnings),
+		    									content: content});
+		    			fs.unlink(filePath); //Deleting processed file.
+		    		}
+		    	}); //Parsing file content.
+				
+				
+		    }
+		    
+		});
+	}else{
+
+		console.log('custom');
+		var filePath = './' + req.files.netlist.path; //Full file path.
+		if(typeof(req.files.stdcellfile) === 'undefined'){
+			console.log('No stdcell file uploaded');
+			req.flash('error', 'You must specify the custom standard cell library.');
+			res.redirect('/');
+			fs.unlink(filePath);
+			return;
+		}
+		var stdCellFilePath = './' + req.files.stdcellfile.path;
+		var stdCellCeontent;
+
+		fs.readFile(stdCellFilePath, 'utf8', function read(err, data){
+			if (err) {
+		    	req.flash('error', 'Select a Verilog netlist file to process.');
+		        res.redirect('/');
+		        fs.unlink(filePath); //Deleting uploaded file.
+		        fs.unlink(stdCellFilePath);
+		    }else{
+		    	stdCellContent = data;
+		    	var content; //File content holder.
+				fs.readFile(filePath, 'utf8', function read(err, data) { //Reading file content.
+				    if (err) {
+				    	console.log(err);
+				        res.status(500).send('Error');
+				        fs.unlink(filePath); //Deleting uploaded file.
+				        fs.unlink(stdCellFilePath);
+				    }else{
+				    	content = data;
+				    	Parser.parse(content, edif, function(err, gates, wires, warnings){
+				    		if(err){
+				    			console.log(err);
+				    			res.render('circuit', { title: 'Circuit',
+				    									error: err,
+				    									graphGates: JSON.stringify([]),
+				    									graphWires: JSON.stringify([]),
+				    									graphMapper: JSON.stringify([]),
+				    									content: content});
+				    			fs.unlink(filePath); //Deleting processed file.
+				    			fs.unlink(stdCellFilePath);
+				    		}else{
+				    			var builder = new GraphBuilder(gates);
+				    			builder.LongestPathLayering(); // Layering of the DAG
+				    			builder.ProperLayering(); // Dummy nodes placement
+				    			builder.CrossingReduction(); // Crossing reduction
+				    			
+				    			var graph_settings = {
+				    				max_comp_w: 100,
+				    				max_comp_h: 50,
+				    				layer_spacing: 150,
+				    				node_spacing: 50,
+				    				left_marg: 10,
+				    				top_marg: 10
+				    			};
+				    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
+				    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
+				    			var wiresMap = {};
+				    			for(var i = 0; i < wires.length; i++)
+				    				wiresMap[wires[i].id] = wires[i];
+				    			res.render('circuit', { title: 'Circuit',
+				    									error: '',
+				    									graphGates: JSON.stringify(GraphingMaterial.gates),
+				    									graphWires: JSON.stringify(GraphingMaterial.adjaceny_list),
+				    									graphMapper: JSON.stringify(graphMapper),
+				    									connectionWires: JSON.stringify(wiresMap),
+				    									warnings: JSON.stringify(warnings),
+				    									content: content});
+				    			fs.unlink(filePath); //Deleting processed file.
+				    			fs.unlink(stdCellFilePath);
+				    		}
+				    	}); //Parsing file content.
+						
+						
+				    }
+				    
+				});
+		    }
+		});
+
+		
+	}
+	
 
 	
 });

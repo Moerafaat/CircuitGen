@@ -14,11 +14,12 @@ var buf = Component.buf;
 var inputPort = Component.input;
 var outputPort = Component.output;
 var WireType = Component.WireType;
+var EDIF;
 
 function getGatesRegEx(){
 	var gates = "";
 	var models = [];
-	for(model in Component.EDIF){
+	for(model in EDIF){
 		models.push('' + model);
 	}
 	for(var i = 0; i < models.length; i++){
@@ -56,6 +57,8 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 	var commentRegex = /\/\/.*$/gm; //RegEx: Capturing comments RegEx.
 	var mCommentRegex = /\/\*(.|[\r\n])*?\*\//gm; //RegEx: Capturing multi-line comments RegEx.
 	var moduleRegex = /module (\w+)\(?.*\)?/gm; //RegEx: capturing module name.;
+
+	EDIF = EDIFContent;
 
 	content = content.replace(mCommentRegex, ''); //Removing multi-line comments.
 	content = content.replace(commentRegex, ''); //Removing single line comments.
@@ -416,7 +419,7 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 			var connectionTokens = gateConnections.split(',');
 			var gateInputs = [];
 			var gateOuputs = [];
-			var EDIFModel = Component.EDIF[instanceModel];
+			var EDIFModel = EDIF[instanceModel];
 
 			if(typeof EDIFModel === 'undefined'){ //Checking the existence of the model in the library.
 				console.log('Unknown module ' + instanceModel);
