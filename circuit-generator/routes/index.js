@@ -50,7 +50,6 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 		return;
 	}
 	if (req.body.stdcells != 'custom'){
-		console.log('default');
 		var filePath = './' + req.files.netlist.path; //Full file path.
 		var content; //File content holder.
 		fs.readFile(filePath, 'utf8', function read(err, data) { //Reading file content.
@@ -90,11 +89,6 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 		    			for(var i = 0; i < wires.length; i++)
 		    				wiresMap[wires[i].id] = wires[i];
 		    			var al = GraphingMaterial.adjaceny_list;
-		    			/*for(var i = 0; i < al.length; i++){
-		    				console.log(i +':');
-		    				console.log(al[i]);
-		    			}*/
-
  		    			res.render('circuit', { title: 'Circuit',
 		    									error: '',
 		    									graphGates: JSON.stringify(GraphingMaterial.gates),
@@ -112,8 +106,6 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 		    
 		});
 	}else{
-
-		console.log('custom');
 		var filePath = './' + req.files.netlist.path; //Full file path.
 		if(typeof(req.files.stdcellfile) === 'undefined'){
 			console.log('No stdcell file uploaded');
@@ -150,7 +142,6 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 						        fs.unlink(stdCellFilePath);
 				    		}else{
 				    			console.log(parsedEdif);
-				    			parsedEdif = edif;
 				    			Parser.parseNetlist(content, parsedEdif, function(err, gates, wires, warnings){
 						    		if(err){
 						    			console.log(err);

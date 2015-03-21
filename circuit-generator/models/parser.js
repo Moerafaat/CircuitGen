@@ -30,6 +30,18 @@ function getGatesRegEx(){
 	return new RegExp('^\\s*(' + gates + ')\\s+(\\w+)\\s*\\(([\\(\\[\\)\\],\\s\\.\\w\\r\\n\\)]*)\\)\\s*$', 'gm');
 }
 
+function getPrimRegEx(){
+	var gates = "";
+	var models = ['and', 'nand', 'or', 'nor', 'xor', 'xnor', 'dff', 'not', 'buf'];
+
+	for(var i = 0; i < models.length; i++){
+		gates = gates + models[i];
+		if(i < models.length - 1)
+			 gates = gates + "|";
+	}
+	return new RegExp('^\s*(' + gates + ')\s*\((.*)?\)\s*', 'gm');
+}
+
 function getWireRegEx(identifier){
 	return new RegExp('^\\s*' + identifier + '\\s+(\\S+)\\s*$', 'gm');
 }
@@ -85,7 +97,7 @@ module.exports.parseLibrary = function(content, callback){
 
 		if(endmoduleCount != 1 || moduleCount != 1){
 			console.log('Invalid input');
-			return callback('Error while parsing the module ' + moduleName, {});
+			return callback('Error while parsing the module ' + moduleName, null);
 		}
 		cell = cell.replace(endmoduleRegex, ''); //Removing 'endmodule'.
 
@@ -107,15 +119,42 @@ module.exports.parseLibrary = function(content, callback){
 			if (defLines[i] == '')
 				defLines.splice(i--, 1);
 		}
-		//console.log(key + ':');
+
+		var cellObject = {name: key,
+						  inputPorts: [],
+						  outputPorts: []
+						};
+
 		for(var i = 0; i < defLines.length; i++){
-			//console.log(i + ':');
-			//console.log(defLines[i]);
+			var wireRegex = getWireRegEx('wire'); //RegEx: Capturing wire.
+			var inputRegex = getWireRegEx('input'); //RegEx: Capturing input.
+			var outputRegex = getWireRegEx('output'); //RegEx: Capturing output.
+			var primRegex = getPrimRegEx();
+			if (wireRegex.test(defLines[i])){
+				console.log('Wires in library are not supported yet');
+			}else if (inputRegex.test(defLines[i])){
+				var inputRegex = getWireRegEx('input');
+				var wireName = inputRegex.exec(defLines[i])[1];
+				cellObject.inputPorts.push(wireName);
+			}else if (outputRegex.test(defLines[i])){
+				var outputRegex = getWireRegEx('output');
+				var wireName = outputRegex.exec(defLines[i])[1];
+				cellObject.outputPorts.push(wireName);
+			}else if (primRegex.test(defLines[i])){
+				var primRegex = getPrimRegEx();
+				var primName = primRegex.exec(defLines[i])[1];
+				cellObject['primitive'] = primName;
+			}else{
+				console.log('Invalid line ' + defLines[i]);
+				return callback('Invalid line ' + defLines[i] + '.', null);
+			}
 		}
+		parsedEdif[key] = cellObject;
+
 	}
 
 
-	callback(null, {});
+	callback(null, parsedEdif);
 };
 
 
