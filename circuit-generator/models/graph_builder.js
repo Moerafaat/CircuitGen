@@ -42,6 +42,7 @@ GraphBuilder.prototype.LongestPathLayering = function(){ // Assigning the x-coor
 	var current_layer = 0;
 
 	while(assigned.length < this.gates.length){
+		console.log(assigned.length);
 		var selected = false;
 		for(var i=0; i<this.gates.length; i++){
 			if(assigned.indexOf(i) == -1){ // Not assigned
@@ -318,7 +319,6 @@ GraphBuilder.prototype.CyclesRemoval = function(){
 		}
 	}
 	node_sequence = left.concat(right); // Generate node sequence
-
 	var index, index1, index2;
 	for(var i=0; i<this.adjaceny_list; i++){
 		for(var j=0; j<this.adjaceny_list[i]; j++){
@@ -393,7 +393,7 @@ GraphBuilder.prototype.AssignAbsoluteValues = function(settings){
 		}
 	}
 
-	/*for(var i=0; i<this.layers.length; i++){
+	for(var i=0; i<this.layers.length; i++){
 		for(var j=0; j<this.layers[i].length; j++){
 			console.log("GATE: " + this.layers[i][j]
 				+ " AX: " + this.gates[this.layers[i][j]].rx
@@ -401,7 +401,7 @@ GraphBuilder.prototype.AssignAbsoluteValues = function(settings){
 				+ " X: " + this.gates[this.layers[i][j]].x
 				+ " Y: " + this.gates[this.layers[i][j]].y);
 		}
-	}*/
+	}
 
 	// An object with the required data to plot the circuit
 	return {
