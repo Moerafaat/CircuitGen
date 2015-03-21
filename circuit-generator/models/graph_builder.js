@@ -7,6 +7,7 @@ var GraphBuilder = function(gates){
 	this.layers[0] = new Array();
 	this.gates = gates;
 	this.adjaceny_list = new Array(gates.length); // Adjaceny list to build DAG
+	this.reversed_edges = new Array();
 
 	// Starting values for absolute graphing
 	this.width = 0;
@@ -30,10 +31,12 @@ var GraphBuilder = function(gates){
 			this.adjaceny_list[i].push(this.gates.indexOf(neighbours[j]));
 		}
 	}
-	// DAG constructed
+	// Graph constructed
 };
 
 GraphBuilder.prototype.LongestPathLayering = function(){ // Assigning the x-coordinate of the gates
+	this.CyclesRemoval(); // Remove any cycles that exist (DAG constructed)
+
 	var assigned = new Array(); // Nodes assigned
 	var included = new Array(); // Sublayered nodes
 	var current_layer = 0;
@@ -70,7 +73,16 @@ GraphBuilder.prototype.LongestPathLayering = function(){ // Assigning the x-coor
 GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
 	for(var i=0; i<this.gates.length; i++){
 		for(var j=0; j<this.adjaceny_list[i].length; j++){
-			if(this.gates[i].rx - this.gates[this.adjaceny_list[i][j]].rx > 1){ // If we have long edge	
+			if(this.gates[i].rx - this.gates[this.adjaceny_list[i][j]].rx > 1){ // If we have long edge
+				var is_reversed_edge = false;
+				var r_edge;
+				for(var k=0; k<this.reversed_edges; k++){
+					if(this.reversed_edges[k].child == i && this.reversed_edges[k].parent == this.adjaceny_list[i][j]){ // Match
+						is_reversed_edge = true;
+						r_edge = k;
+					}
+				}
+
 				var dummy;
 				var children;
 				var end_node_index = this.adjaceny_list[i][j]; // end node
@@ -80,8 +92,11 @@ GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
 				dummy.dummy = true;
 				dummy.rx = this.gates[i].rx - 1;
 				this.gates.push(dummy);
-				this.adjaceny_list[i].push(this.gates.length - 1);
+				this.adjaceny_list[i].push(this.gates.length-1);
 				this.layers[dummy.rx].push(this.gates.length-1);
+				if(is_reversed_edge){
+					this.reversed_edges[r_edge].path.splice(1, 0, this.gates.length-1);
+				}
 
 				for(var k=2; k<this.gates[i].rx - this.gates[this.adjaceny_list[i][j]].rx; k++){
 					dummy = new Component.component();
@@ -89,6 +104,9 @@ GraphBuilder.prototype.ProperLayering = function(){ // Introducing dummy nodes
 					dummy.rx = this.gates[i].rx - k;
 					this.gates.push(dummy);
 					this.layers[dummy.rx].push(this.gates.length-1);
+					if(is_reversed_edge){
+						this.reversed_edges[r_edge].path.splice(1, 0, this.gates.length-1);
+					}
 
 					children = new Array();
 					children.push(this.gates.length - 1);
@@ -156,6 +174,7 @@ GraphBuilder.prototype.CrossingReduction = function(){
 		}
 	}
 
+	this.RestoreCycles(); // Restore the original orientation of the graph
 	// Cross Reduced Properly Layered DAG constructed
 };
 
@@ -199,6 +218,142 @@ function BaryCenter(gates, adjaceny_list, layers, layer1, layer2, is_reversed){
 
 	layers[layer2].sort(compareY(gates)); // Sort by barycenter
 }
+
+GraphBuilder.prototype.CyclesRemoval = function(){
+	var left = new Array();
+	var right = new Array();
+	var recheck_sink, recheck_source;
+	var max_delta, max_delta_node;
+	var temp_graph = new Array(this.adjaceny_list.length);
+
+	for(var i=0; i<this.adjaceny_list.length; i++){ // Construct a copy
+		var temp_arr = new Array();
+		for(var j=0; j<this.adjaceny_list[i].length; j++){
+			temp_arr.push(this.adjaceny_list[i][j]);
+		}
+		temp_graph[i] = temp_arr;
+	}
+
+	var reverse_graph = new Array(temp_graph.length);
+	var counter = temp_graph.length;
+	var node_sequence = new Array();
+
+	// Setup reverse graph
+	for(var i=0; i<reverse_graph.length; i++){
+		reverse_graph[i] = new Array();
+	}
+	for(var i=0; i<temp_graph.length; i++){
+		for(var j=0; j<temp_graph[i].length; j++){
+			reverse_graph[j].push(i);
+		}
+	}
+
+	while(counter != 0){
+		recheck_sink = true;
+		recheck_source = true;
+
+		while(recheck_sink){ // Remove all sinks
+			recheck_sink = false;
+			for(var i=0; i<temp_graph.length; i++){
+				if(typeof(temp_graph[i]) === "undefined")
+					continue;
+				if(temp_graph[i].length == 0){ // Found sink
+					recheck_sink = true;
+					counter--;
+					right.unshift(i); // Prepend sink to right
+					// Remove node from graph
+					delete temp_graph[i];
+					delete reverse_graph[i]; 
+
+					for(var j=0; j<temp_graph.length; j++){ // Remove connections
+						if(typeof(temp_graph[j]) === "undefined")
+							continue;
+						var index = temp_graph[j].indexOf(i);
+						if(index != -1)
+							temp_graph[j].splice(index, 1);
+					}
+				}
+			}
+		}
+
+		while(recheck_source){ // Remove all sources
+			recheck_source = false;
+			for(var i=0; i<reverse_graph.length; i++){
+				if(typeof(reverse_graph[i]) === "undefined")
+					continue;
+				if(reverse_graph[i].length == 0){ // Found source
+					recheck_source = true;
+					counter--;
+					left.push(i); // Append source to left
+					// Remove node from graph
+					delete temp_graph[i];
+					delete reverse_graph[i];
+
+					for(var j=0; j<reverse_graph.length; j++){
+						if(typeof(reverse_graph[j]) === "undefined")
+							continue;
+						var index = reverse_graph[j].indexOf(i);
+						if(index != -1)
+							reverse_graph[j].splice(index, 1);
+					}
+				}
+			}
+		}
+
+		if(counter != 0){
+			delta = Number.NEGATIVE_INFINITY;
+			for(var i=0; i<temp_graph.length; i++){
+				if(typeof(temp_graph[i]) === "undefined")
+					continue;
+				if(temp_graph[i] - reverse_graph[i] > delta){ // Maximum outdegree - indegree
+					delta = temp_graph[i] - reverse_graph[i];
+					max_delta_node = i;
+				}
+			}
+			counter--;
+			left.push(max_delta_node); // Append maximum delta node to left
+			// Remove node from graph
+			delete temp_graph[max_delta_node];
+			delete reverse_graph[max_delta_node];
+		}
+	}
+	node_sequence = left.concat(right); // Generate node sequence
+
+	var index, index1, index2;
+	for(var i=0; i<this.adjaceny_list; i++){
+		for(var j=0; j<this.adjaceny_list[i]; j++){
+			index1 = node_sequence.indexOf(i);
+			index2 = node_sequence.indexOf(this.adjaceny_list[i][j]);
+			if(index1 > index2){ // Edge to be reversed
+				var path = new Array();
+				path.push(i);
+				path.push(this.adjaceny_list[i][j]);
+				this.reversed_edges.push({
+					parent: i,
+					child: this.adjaceny_list[i][j],
+					path: path
+				});
+				// Reverse edge
+				this.adjaceny_list[this.adjaceny_list[i][j]].push(i);
+				index = this.adjaceny_list[i].indexOf(this.adjaceny_list[i][j]);
+				this.adjaceny_list[i].splice(index, 1);
+			}
+		}
+	}
+};
+
+GraphBuilder.prototype.RestoreCycles = function(){
+	var index;
+	for(var i=0; i<this.reversed_edges.length; i++){
+		for(var j=0; j<this.reversed_edges.path.length-1; j++){
+			this.adjaceny_list[this.reversed_edges[i].path[j]].push(this.reversed_edges[i].path[j+1]);
+		}
+		for(var j=this.reversed_edges.path.length-1; j>0; j--){
+			index = this.adjaceny_list[this.reversed_edges[i].path[j]].indexOf(this.reversed_edges[i].path[j-1]);
+			this.adjaceny_list[this.reversed_edges[i].path[j]].splice(index, 1);
+		}
+	}
+};
 
 GraphBuilder.prototype.AssignAbsoluteValues = function(settings){
 	// Apply settings
