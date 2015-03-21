@@ -238,7 +238,7 @@ GraphBuilder.prototype.AssignAbsoluteValues = function(settings){
 		}
 	}
 
-	for(var i=0; i<this.layers.length; i++){
+	/*for(var i=0; i<this.layers.length; i++){
 		for(var j=0; j<this.layers[i].length; j++){
 			console.log("GATE: " + this.layers[i][j]
 				+ " AX: " + this.gates[this.layers[i][j]].rx
@@ -246,7 +246,7 @@ GraphBuilder.prototype.AssignAbsoluteValues = function(settings){
 				+ " X: " + this.gates[this.layers[i][j]].x
 				+ " Y: " + this.gates[this.layers[i][j]].y);
 		}
-	}
+	}*/
 
 	// An object with the required data to plot the circuit
 	return {

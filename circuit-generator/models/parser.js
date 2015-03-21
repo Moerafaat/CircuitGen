@@ -423,41 +423,133 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 				return callback('Unknown module ' + instanceMode, null, null, null);
 			}
 
-			var newGate = new Component[EDIFModel.primitive](instanceModel);
-			for (var p = 0; p < connectionTokens.length; p++) { //Establishing connections.
-				var paramRegex = getParamRegEx();
-				var matchedTokens = paramRegex.exec(connectionTokens[p]);
-				var portName = matchedTokens[1];
-				var wireName = matchedTokens[2];
-				if(EDIFModel.inputPorts.indexOf(portName) != -1){ //Establishing input connection.
-					if (typeof wires[wireName] !== 'undefined'){
-						newGate.addInput(wires[wireName].id);
-						wires[wireName].addOutput(newGate.id);
-					}else if (typeof inputs[wireName] !== 'undefined'){
-						newGate.addInput(inputs[wireName].id);
-						inputs[wireName].addOutput(newGate.id);
-					}else{
-						console.log('Undeclared wire ' + wireName); 
-						return callback('Undeclared wire ' + wireName, null, null, null);
-					}
-				}else if (EDIFModel.outputPorts.indexOf(portName) != -1){ //Establishing output connection.
-					if (typeof wires[wireName] !== 'undefined'){
-						newGate.addOutput(wires[wireName].id);
-						wires[wireName].setInput(newGate.id);
-					}else if (typeof outputs[wireName] !== 'undefined'){
-						newGate.addOutput(outputs[wireName].id);
-						outputs[wireName].setInput(newGate.id);
-					}else{
-						console.log('Undeclared wire ' + wireName);
-						return callback('Undeclared wire ' + wireName, null, null, null);
-					}
-				}else{
-					console.log('Undefined port ' + portName + ' for ' + EDIFModel.name);
-					return callback('Undefined port ' + portName + ' for ' + EDIFModel.name, null, null, null);
-				}
+			if (EDIFModel.hasOwnProperty('compound') && EDIFModel.compound){
+				EDIFModel.getComponent(function(subGates, subWires){
+							for (key in subWires){
+								wires[key] = subWires[key];
+							}
+
+							for (var p = 0; p < connectionTokens.length; p++) { //Establishing connections.
+								var paramRegex = getParamRegEx();
+								var matchedTokens = paramRegex.exec(connectionTokens[p]);
+								var portName = matchedTokens[1];
+								var wireName = matchedTokens[2];
+								if(EDIFModel.inputPorts.indexOf(portName) != -1){ //Establishing input connection.
+									if (typeof wires[wireName] !== 'undefined'){
+										for(var z = 0; z < subGates.length; z++){
+											var wirePlaced = false;
+											if (subGates[z].openInputTerminals > 0){
+												subGates[z].addInput(wires[wireName].id);
+												wires[wireName].addOutput(subGates[z].id);
+												wirePlaced = true;
+												break;
+											}
+										}
+										if (!wirePlaced){
+											console.log('Could not connect the wire ' + wireName);
+										}
+										
+									}else if (typeof inputs[wireName] !== 'undefined'){
+										for(var z = 0; z < subGates.length; z++){
+											var wirePlaced = false;
+											if (subGates[z].openInputTerminals > 0){
+												console.log('Connecting input wire: ' + wireName + ' to ' + subGates[z].model + '  ' + subGates[z].id);
+
+												subGates[z].addInput(inputs[wireName].id);
+												inputs[wireName].addOutput(subGates[z].id);
+												wirePlaced = true;
+												break;
+											}
+										}
+										if (!wirePlaced){
+											console.log('Could not connect the wire ' + wireName);
+										}
+
+									}else{
+										console.log('Undeclared wire ' + wireName); 
+										return callback('Undeclared wire ' + wireName, null, null, null);
+									}
+								}else if (EDIFModel.outputPorts.indexOf(portName) != -1){ //Establishing output connection.
+									if (typeof wires[wireName] !== 'undefined'){
+										for(var z = 0; z < subGates.length; z++){
+											var wirePlaced = false;
+											if (subGates[z].openOutputTerminals > 0){
+												subGates[z].addOutput(wires[wireName].id);
+												wires[wireName].setInput(subGates[z].id);
+												wirePlaced = true;
+												break;
+											}
+										}
+										if (!wirePlaced){
+											console.log('Could not connect the wire ' + wireName);
+										}
+
+									}else if (typeof outputs[wireName] !== 'undefined'){
+										for(var z = 0; z < subGates.length; z++){
+											var wirePlaced = false;
+											if (subGates[z].openOutputTerminals > 0){
+												subGates[z].addOutput(outputs[wireName].id);
+												outputs[wireName].setInput(subGates[z].id);
+												wirePlaced = true;
+												break;
+											}
+										}
+										if (!wirePlaced){
+											console.log('Could not connect the wire ' + wireName);
+										}
+									}else{
+										console.log('Undeclared wire ' + wireName);
+										return callback('Undeclared wire ' + wireName, null, null, null);
+									}
+								}else{
+									console.log('Undefined port ' + portName + ' for ' + EDIFModel.name);
+									return callback('Undefined port ' + portName + ' for ' + EDIFModel.name, null, null, null);
+								}
+								
+							}
+							for (var f = 0; f < subGates.length; f++)
+								gates.push(subGates[f]);
+						
+					});
 				
+					
+			}else{
+				var newGate = new Component[EDIFModel.primitive](instanceModel);
+				for (var p = 0; p < connectionTokens.length; p++) { //Establishing connections.
+					var paramRegex = getParamRegEx();
+					var matchedTokens = paramRegex.exec(connectionTokens[p]);
+					var portName = matchedTokens[1];
+					var wireName = matchedTokens[2];
+					if(EDIFModel.inputPorts.indexOf(portName) != -1){ //Establishing input connection.
+						if (typeof wires[wireName] !== 'undefined'){
+							newGate.addInput(wires[wireName].id);
+							wires[wireName].addOutput(newGate.id);
+						}else if (typeof inputs[wireName] !== 'undefined'){
+							newGate.addInput(inputs[wireName].id);
+							inputs[wireName].addOutput(newGate.id);
+						}else{
+							console.log('Undeclared wire ' + wireName); 
+							return callback('Undeclared wire ' + wireName, null, null, null);
+						}
+					}else if (EDIFModel.outputPorts.indexOf(portName) != -1){ //Establishing output connection.
+						if (typeof wires[wireName] !== 'undefined'){
+							newGate.addOutput(wires[wireName].id);
+							wires[wireName].setInput(newGate.id);
+						}else if (typeof outputs[wireName] !== 'undefined'){
+							newGate.addOutput(outputs[wireName].id);
+							outputs[wireName].setInput(newGate.id);
+						}else{
+							console.log('Undeclared wire ' + wireName);
+							return callback('Undeclared wire ' + wireName, null, null, null);
+						}
+					}else{
+						console.log('Undefined port ' + portName + ' for ' + EDIFModel.name);
+						return callback('Undefined port ' + portName + ' for ' + EDIFModel.name, null, null, null);
+					}
+					
+				}
+				gates.push(newGate);
 			}
-			gates.push(newGate);		
 
 		}else{
 			console.log('Invalid line ' + lines[i]);
