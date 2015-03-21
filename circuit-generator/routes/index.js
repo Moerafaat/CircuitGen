@@ -63,6 +63,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    									content: content});
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}else{
+	    			//console.log(gates);
 	    			var builder = new GraphBuilder(gates);
 	    			builder.LongestPathLayering(); // Layering of the DAG
 	    			builder.ProperLayering(); // Dummy nodes placement
