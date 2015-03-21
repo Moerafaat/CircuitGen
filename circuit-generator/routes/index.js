@@ -63,6 +63,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    									content: content});
 	    			fs.unlink(filePath); //Deleting processed file.
 	    		}else{
+	    			//console.log(gates);
 	    			var builder = new GraphBuilder(gates);
 	    			builder.LongestPathLayering(); // Layering of the DAG
 	    			builder.ProperLayering(); // Dummy nodes placement
@@ -77,10 +78,10 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 	    				top_marg: 10
 	    			};
 	    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
-	    			console.log('Gates:');
+	    			/*console.log('Gates:');
 	    			console.log(GraphingMaterial.gates);
 	    			console.log('Adjacency:');
-	    			console.log(GraphingMaterial.adjaceny_list);
+	    			console.log(GraphingMaterial.adjaceny_list);*/
 
 	    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
 	    			var wiresMap = {};

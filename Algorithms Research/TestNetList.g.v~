@@ -1,10 +1,10 @@
 module booth_encoder(a, b);
     input [15:0] a;
     output b;
-    wire [18:0] w;
+    wire [19:0] w;
     AND2X1 g0 (
         .A(a[0]),
-        .B(a[0]),
+        .B(a[1]),
         .Y(w[0])
     );
     AND2X1 g1 (
