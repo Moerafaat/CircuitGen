@@ -170,3 +170,8 @@ a {
   padding-top: 0.5em;
   padding-left: 1em;
 }
+.error-message{
+  padding-top: 0.2em;
+  color: #DB001D;
+  font-size: 1.1em;
+}

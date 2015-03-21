@@ -3,7 +3,7 @@ module booth_encoder(a, b);
     output b;
     wire [18:0] w;
     AND2X1 g0 (
-        .A(a[0]),
+        .A(w[3]),
         .B(a[1]),
         .Y(w[0])
     );

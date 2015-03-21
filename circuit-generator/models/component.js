@@ -126,6 +126,12 @@ var Component = function(inputs, outputs){ //Component base model.
 	this.xLayout = false;
 	this.yLayout = false;
 
+	this.visible = true;
+
+	this.openInputTerminals = 1;
+	this.openOutputTerminals = 1;
+	this.defaultInputTerminals = 1;
+	this.defaultOutputTerminals = 1;
 	this.flipInputs = function(){
 		if (this.inputs.length != 2)
 			return;
@@ -159,6 +165,8 @@ var Component = function(inputs, outputs){ //Component base model.
 		else{
 			this.inputs = this.inputs.concat(inputPort);
 			this.addGate(this);
+			this.setOpenInputTerminals(this.openInputTerminals - 1);
+
 		}
 	};
 
@@ -168,17 +176,42 @@ var Component = function(inputs, outputs){ //Component base model.
 		else{
 			this.outputs = this.outputs.concat(outputPort);
 			this.addGate(this);
+			this.setOpenOutputTerminals(this.openOutputTerminals - 1);
 		}
 	};
 
 	this.clearInputs = function(){
 		this.inputs = [];
 		this.addGate(this);
+		this.setOpenInputTerminals(this.defaultInputTerminals);
 	}
 
 	this.clearOutputs = function(){
 		this.outputs = [];
 		this.addGate(this);
+		this.setOpenOutputTerminals(this.defaultOutputTerminals);
+	}
+
+	this.setOpenInputTerminals = function(terms){
+		if(terms >= 0){
+			this.openInputTerminals = terms;
+			this.addGate(this);
+		}
+	}
+
+	this.setOpenOutputTerminals = function(terms){
+		if(terms >= 0){
+			this.openOutputTerminals = terms;
+			this.addGate(this);
+		}
+	}
+
+	this.setVisible = function(vis){
+		if (typeof(vis) !== 'undefined'){
+			if (vis === true || vis === false)
+				this.visible = vis;
+				this.addGate(this);
+		}
 	}
 }
 
@@ -263,6 +296,8 @@ and.prototype = new Component(); //And gate model.
 and.prototype.constructor = and;
 function and(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 2;
+	this.defaultInputTerminals = 2;
 	this.type = Type.AND;
 	this.model = model;
 	this.addGate(this);
@@ -272,6 +307,8 @@ nand.prototype = new Component(); //Nand gate model.
 nand.prototype.constructor = nand;
 function nand(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 2;
+	this.defaultInputTerminals = 2;
 	this.type = Type.NAND;
 	this.model = model;
 	this.addGate(this);
@@ -281,6 +318,8 @@ or.prototype = new Component();	//Or gate model.
 or.prototype.constructor = or;
 function or(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 2;
+	this.defaultInputTerminals = 2;
 	this.type = Type.OR;
 	this.model = model;
 	this.addGate(this);
@@ -290,6 +329,8 @@ nor.prototype = new Component(); //Nor gate model.
 nor.prototype.constructor = nor;
 function nor(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 2;
+	this.defaultInputTerminals = 2;
 	this.type = Type.NOR;
 	this.model = model;
 	this.addGate(this);
@@ -299,6 +340,8 @@ xor.prototype = new Component();  //Xor gate model.
 xor.prototype.constructor = xor;
 function xor(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 2;
+	this.defaultInputTerminals = 2;
 	this.type = Type.XOR;
 	this.model = model;
 	this.addGate(this);
@@ -308,6 +351,8 @@ xnor.prototype = new Component();  //Xor gate model.
 xnor.prototype.constructor = xnor;
 function xnor(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 2;
+	this.defaultInputTerminals = 2;
 	this.type = Type.XNOR;
 	this.model = model;
 	this.addGate(this);
@@ -317,6 +362,8 @@ not.prototype = new Component(); //Not gate model.
 not.prototype.constructor = not;
 function not(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 1;
+	this.defaultInputTerminals = 1;
 	this.type = Type.NOT;
 	this.model = model;
 	this.addGate(this);
@@ -326,6 +373,8 @@ buf.prototype = new Component(); //Buffer gate model.
 buf.prototype.constructor = buf;
 function buf(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 1;
+	this.defaultInputTerminals = 1;
 	this.type = Type.BUF;
 	this.model = model;
 	this.addGate(this);
@@ -335,6 +384,8 @@ dff.prototype = new Component(); //Buffer gate model.
 dff.prototype.constructor = dff;
 function dff(model, inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 1;
+	this.defaultInputTerminals = 1;
 	this.type = Type.DFF;
 	this.model = model;
 	this.addGate(this);
@@ -345,6 +396,8 @@ input.prototype = new Component(); //Input model
 input.prototype.constructor = input;
 function input(inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 1;
+	this.defaultInputTerminals = 1;	
 	this.type = Type.INPORT;
 	this.addGate(this);
 	this.model = 'InputPort';
@@ -354,6 +407,8 @@ output.prototype = new Component(); //Input model
 output.prototype.constructor = output;
 function output(inputs, outputs){
 	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 1;
+	this.defaultInputTerminals = 1;
 	this.type = Type.OUTPORT;
 	this.addGate(this);
 	this.model = 'OutputPort';
@@ -505,7 +560,7 @@ module.exports.Readable = function(component, wires){
 
 
 
-module.exports.EDIF = {
+var EDIF = {
 	AND2X1: {
 		name: 'AND2X1',
 		inputPorts: ['A', 'B'],
@@ -609,7 +664,70 @@ module.exports.EDIF = {
 	}
 };
 
-/*module.exports.EDIF = {
+var PremEDIF = {
+	P_and: {
+		name: 'and',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'and'
+	},
+	P_or: {
+		name: 'or',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'or'
+	},
+	P_xor: {
+		name: 'xor',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'xor'
+	},
+	P_nor: {
+		name: 'nor',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'nor'
+	},
+	P_xnor: {
+		name: 'xnor',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'xnor'
+	},
+	P_nand: {
+		name: 'nand',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'nand'
+	},
+	P_not: {
+		name: 'not',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'not'
+	},
+	P_buf: {
+		name: 'buf',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'buf'
+	},
+	getJointMap: function(){
+		var map = {};
+		for (key in this){
+			if (key == 'getJointMap')
+				continue;
+			map[key]= VerilogToJointMap[this[key].primitive];
+		}
+		map['InputPort'] = VerilogToJointMap['InputPort'];
+		map['OutputPort'] = VerilogToJointMap['OutputPort'];
+		return map;
+	}
+};
+module.exports.PremEDIF = PremEDIF;
+
+var TestEDIF = {
 	AND2X1: {
 		name: 'AND2X1',
 		inputPorts: ['A', 'B'],
@@ -622,9 +740,62 @@ module.exports.EDIF = {
 		outputPorts: ['Y'],
 		primitive: 'and'
 	},
+	MN2X1: {
+		compound: true,
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		getComponent: function(callback){
+			var subG = [];
+			var subGMap = {};
+			var subWMap = {};
+			var pand_1 = new and('P_and');
+			var pand_2 = new and('P_and');
+			var pnot_1 = new not('P_not');
+			var buf_1 = new buf('P_buf');
+
+			var buf_pand1_not_connection = new wire(WireType.CONNECTION);
+			var pand1_pand2_connection = new wire(WireType.CONNECTION);
+			var pnot1_pand2_connection = new wire(WireType.CONNECTION);
+
+			buf_1.addOutput(buf_pand1_not_connection.id);
+			buf_pand1_not_connection.setInput(buf_1.id);
+
+			buf_pand1_not_connection.addOutput(pand_1.id);
+			buf_pand1_not_connection.addOutput(pnot_1.id);
+			pand_1.addInput(buf_pand1_not_connection.id);
+			pnot_1.addInput(buf_pand1_not_connection.id);
+
+			pand1_pand2_connection.setInput(pand_1.id);
+			pand_1.addOutput(pand1_pand2_connection.id);
+
+			pnot1_pand2_connection.setInput(pnot_1.id);
+			pnot_1.addOutput(pnot1_pand2_connection.id);
+
+			pand_2.addInput(pand1_pand2_connection.id);
+			pand1_pand2_connection.addOutput(pand_2.id);
+			pand_2.addInput(pnot1_pand2_connection.id);
+			pnot1_pand2_connection.addOutput(pand_2.id);
+			
+			subGMap['pand_1'] = pand_1;
+			subGMap['pand_2'] = pand_2;
+			subGMap['pnot_1'] = pnot_1;
+			subGMap['buf_1'] = buf_1;
+			
+			subWMap['buf_pand1_not_connection'] = buf_pand1_not_connection;
+			subWMap['pand1_pand2_connection'] = pand1_pand2_connection;
+			subWMap['pnot1_pand2_connection'] = pnot1_pand2_connection;
+
+			for(key in subGMap)
+				subG.push(subGMap[key]);
+			callback(subG, subWMap);
+
+		}
+	},
 	NAND2X1:{
 		compound: true,
-		code:''
+		getComponent: function(inWires, outWires, callback){
+
+		}
 	},
 	OR2X1:{
 		name: 'OR2X1',
@@ -699,8 +870,15 @@ module.exports.EDIF = {
 				continue;
 			map[key]= VerilogToJointMap[this[key].primitive];
 		}
+		for (key in PremEDIF){
+			if (key == 'getJointMap')
+				continue;
+			map[key]= VerilogToJointMap[PremEDIF[key].primitive];
+		}
 		map['InputPort'] = VerilogToJointMap['InputPort'];
 		map['OutputPort'] = VerilogToJointMap['OutputPort'];
 		return map;
 	}
-};*/
+};
+
+module.exports.EDIF = EDIF;

@@ -14,11 +14,12 @@ var buf = Component.buf;
 var inputPort = Component.input;
 var outputPort = Component.output;
 var WireType = Component.WireType;
+var EDIF;
 
 function getGatesRegEx(){
 	var gates = "";
 	var models = [];
-	for(model in Component.EDIF){
+	for(model in EDIF){
 		models.push('' + model);
 	}
 	for(var i = 0; i < models.length; i++){
@@ -49,13 +50,83 @@ function getAssignReplaceRegEx(wireName){
 	return new RegExp('\\b('+ wireName + ')\\b', 'gm');
 }
 
+function getCellDefineRegEx(){
+	return new RegExp('\\s*`celldefine([\\s\\S]+?)`endcelldefine\\s*', '');
+}
+
+function getSpecifyRegEx(){
+	return new RegExp('\\s*specify[\\s\\S]*?endspecify\\s*', '');
+}
 
 
-module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist parsing function.
+
+
+module.exports.parseLibrary = function(content, callback){
+	var parsedEdif = {};
+	var timescaleRegex = /\s*`\s*timescale.*$/gm;
+	content = content.replace(timescaleRegex, '').trim();
+
+	var cellsDefinitions = {};
+	var cellDefineRegEx = getCellDefineRegEx();
+	while(cellDefineRegEx.test(content)){
+		cellDefineRegEx = getCellDefineRegEx();
+		var cell = cellDefineRegEx.exec(content)[1].trim();
+
+		var endmoduleRegex = /\s*endmodule\s*/g;
+		var moduleRegex = /\s*module (\w+)\s*\(?.*\)?\s*;\s*/gm;
+
+		var endmoduleCount = (cell.match(endmoduleRegex) || []).length; //Counting the occurences of 'endmodule'.
+		//console.log(endmoduleCount);
+
+		var moduleCount = (cell.match(moduleRegex) || []).length; //Counting the occurences of 'module'.
+		//console.log(moduleCount);
+
+		var warnings = [];
+
+		if(endmoduleCount != 1 || moduleCount != 1){
+			console.log('Invalid input');
+			return callback('Error while parsing the module ' + moduleName, {});
+		}
+		cell = cell.replace(endmoduleRegex, ''); //Removing 'endmodule'.
+
+		var moduleName = moduleRegex.exec(cell)[1];		
+		cell = cell.replace(moduleRegex, ''); //Removing module name.
+
+		var specifyRegex = getSpecifyRegEx();
+		cell = cell.replace(specifyRegex, '');
+
+		cellsDefinitions[moduleName] = cell;
+		content = content.replace(getCellDefineRegEx(), '');
+		cellDefineRegEx = getCellDefineRegEx();
+	}
+	for (key in cellsDefinitions){
+		var currentCell = cellsDefinitions[key];
+		var defLines = currentCell.split(/\s*;\s*/gm);
+		for(var i = 0; i < defLines.length; i++){
+			defLines[i] = defLines[i].trim();
+			if (defLines[i] == '')
+				defLines.splice(i--, 1);
+		}
+		//console.log(key + ':');
+		for(var i = 0; i < defLines.length; i++){
+			//console.log(i + ':');
+			//console.log(defLines[i]);
+		}
+	}
+
+
+	callback(null, {});
+};
+
+
+
+module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //Netlist parsing function.
 	var endmoduleRegex = /endmodule/g; //RegEx: Capturing 'endmodule'.
 	var commentRegex = /\/\/.*$/gm; //RegEx: Capturing comments RegEx.
 	var mCommentRegex = /\/\*(.|[\r\n])*?\*\//gm; //RegEx: Capturing multi-line comments RegEx.
-	var moduleRegex = /module (\w+)\(?.*\)?/gm; //RegEx: capturing module name.;
+	var moduleRegex =  /\s*module (\w+)\s*\(?.*\)?\s*;\s*/gm; //RegEx: capturing module name.;
+
+	EDIF = EDIFContent;
 
 	content = content.replace(mCommentRegex, ''); //Removing multi-line comments.
 	content = content.replace(commentRegex, ''); //Removing single line comments.
@@ -392,7 +463,6 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 					}
 				}
 			}
-			//console.log('Output Bus [' + busMSB + ':' + busLSB + '] ' + busName);
 		}else 
 			break;
 		lines.splice(i--, 1);
@@ -411,67 +481,146 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 			moduleInstance = moduleInstance.trim().replace(/\r\n/g, '').trim(); //Stripping module.
 			var gatesRegex = getGatesRegEx(); 
 			var gateComponents = gatesRegex.exec(moduleInstance); //Geting module tokens.
-			//console.log(gateComponents);
 			var instanceModel = gateComponents[1].trim(); //Gate model.
 			var instanceName = gateComponents[2].trim(); //Module name.
 			var gateConnections = gateComponents[3].replace(/\r\n/g, '').replace(/\s+/g, ''); //Extracting connections.
-			/*console.log('------');
-			console.log('Model: ' + instanceModel);
-			console.log('Name: ' + instanceName);
-			console.log('Connections: ' + gateConnections);
-			console.log('------');*/
 			var connectionTokens = gateConnections.split(',');
 			var gateInputs = [];
 			var gateOuputs = [];
-			var EDIFModel = Component.EDIF[instanceModel];
+			var EDIFModel = EDIF[instanceModel];
 
 			if(typeof EDIFModel === 'undefined'){ //Checking the existence of the model in the library.
 				console.log('Unknown module ' + instanceModel);
 				return callback('Unknown module ' + instanceMode, null, null, null);
 			}
 
-			var newGate = new Component[EDIFModel.primitive](instanceModel);
-			//console.log(moduleInstance);
-			for (var p = 0; p < connectionTokens.length; p++) { //Establishing connections.
-				var paramRegex = getParamRegEx();
-				var matchedTokens = paramRegex.exec(connectionTokens[p]);
-				var portName = matchedTokens[1];
-				var wireName = matchedTokens[2];
-				//console.log('Token: ' + portName);
-				if(EDIFModel.inputPorts.indexOf(portName) != -1){ //Establishing input connection.
-					if (typeof wires[wireName] !== 'undefined'){
-						//console.log('Setting input: ' + JSON.stringify(wires[wireName]));
-						newGate.addInput(wires[wireName].id);
-						wires[wireName].addOutput(newGate.id);
-					}else if (typeof inputs[wireName] !== 'undefined'){
-						//console.log('Setting input: ' + JSON.stringify(inputs[wireName]));
-						newGate.addInput(inputs[wireName].id);
-						inputs[wireName].addOutput(newGate.id);
-					}else{
-						console.log('Undeclared wire ' + wireName); 
-						return callback('Undeclared wire ' + wireName, null, null, null);
-					}
-				}else if (EDIFModel.outputPorts.indexOf(portName) != -1){ //Establishing output connection.
-					if (typeof wires[wireName] !== 'undefined'){
-						//console.log('Setting output: ' + JSON.stringify(wires[wireName]));
-						newGate.addOutput(wires[wireName].id);
-						wires[wireName].setInput(newGate.id);
-					}else if (typeof outputs[wireName] !== 'undefined'){
-						//console.log('Setting output: ' + JSON.stringify(outputs[wireName]));
-						newGate.addOutput(outputs[wireName].id);
-						outputs[wireName].setInput(newGate.id);
-					}else{
-						console.log('Undeclared wire ' + wireName);
-						return callback('Undeclared wire ' + wireName, null, null, null);
-					}
-				}else{
-					console.log('Undefined port ' + portName + ' for ' + EDIFModel.name);
-					return callback('Undefined port ' + portName + ' for ' + EDIFModel.name, null, null, null);
-				}
+			if (EDIFModel.hasOwnProperty('compound') && EDIFModel.compound){
+				EDIFModel.getComponent(function(subGates, subWires){
+							for (key in subWires){
+								wires[key] = subWires[key];
+							}
+
+							for (var p = 0; p < connectionTokens.length; p++) { //Establishing connections.
+								var paramRegex = getParamRegEx();
+								var matchedTokens = paramRegex.exec(connectionTokens[p]);
+								var portName = matchedTokens[1];
+								var wireName = matchedTokens[2];
+								if(EDIFModel.inputPorts.indexOf(portName) != -1){ //Establishing input connection.
+									if (typeof wires[wireName] !== 'undefined'){
+										for(var z = 0; z < subGates.length; z++){
+											var wirePlaced = false;
+											if (subGates[z].openInputTerminals > 0){
+												subGates[z].addInput(wires[wireName].id);
+												wires[wireName].addOutput(subGates[z].id);
+												wirePlaced = true;
+												break;
+											}
+										}
+										if (!wirePlaced){
+											console.log('Could not connect the wire ' + wireName);
+										}
+										
+									}else if (typeof inputs[wireName] !== 'undefined'){
+										for(var z = 0; z < subGates.length; z++){
+											var wirePlaced = false;
+											if (subGates[z].openInputTerminals > 0){
+												console.log('Connecting input wire: ' + wireName + ' to ' + subGates[z].model + '  ' + subGates[z].id);
+
+												subGates[z].addInput(inputs[wireName].id);
+												inputs[wireName].addOutput(subGates[z].id);
+												wirePlaced = true;
+												break;
+											}
+										}
+										if (!wirePlaced){
+											console.log('Could not connect the wire ' + wireName);
+										}
+
+									}else{
+										console.log('Undeclared wire ' + wireName); 
+										return callback('Undeclared wire ' + wireName, null, null, null);
+									}
+								}else if (EDIFModel.outputPorts.indexOf(portName) != -1){ //Establishing output connection.
+									if (typeof wires[wireName] !== 'undefined'){
+										for(var z = 0; z < subGates.length; z++){
+											var wirePlaced = false;
+											if (subGates[z].openOutputTerminals > 0){
+												subGates[z].addOutput(wires[wireName].id);
+												wires[wireName].setInput(subGates[z].id);
+												wirePlaced = true;
+												break;
+											}
+										}
+										if (!wirePlaced){
+											console.log('Could not connect the wire ' + wireName);
+										}
+
+									}else if (typeof outputs[wireName] !== 'undefined'){
+										for(var z = 0; z < subGates.length; z++){
+											var wirePlaced = false;
+											if (subGates[z].openOutputTerminals > 0){
+												subGates[z].addOutput(outputs[wireName].id);
+												outputs[wireName].setInput(subGates[z].id);
+												wirePlaced = true;
+												break;
+											}
+										}
+										if (!wirePlaced){
+											console.log('Could not connect the wire ' + wireName);
+										}
+									}else{
+										console.log('Undeclared wire ' + wireName);
+										return callback('Undeclared wire ' + wireName, null, null, null);
+									}
+								}else{
+									console.log('Undefined port ' + portName + ' for ' + EDIFModel.name);
+									return callback('Undefined port ' + portName + ' for ' + EDIFModel.name, null, null, null);
+								}
+								
+							}
+							for (var f = 0; f < subGates.length; f++)
+								gates.push(subGates[f]);
+						
+					});
 				
+					
+			}else{
+				var newGate = new Component[EDIFModel.primitive](instanceModel);
+				for (var p = 0; p < connectionTokens.length; p++) { //Establishing connections.
+					var paramRegex = getParamRegEx();
+					var matchedTokens = paramRegex.exec(connectionTokens[p]);
+					var portName = matchedTokens[1];
+					var wireName = matchedTokens[2];
+					if(EDIFModel.inputPorts.indexOf(portName) != -1){ //Establishing input connection.
+						if (typeof wires[wireName] !== 'undefined'){
+							newGate.addInput(wires[wireName].id);
+							wires[wireName].addOutput(newGate.id);
+						}else if (typeof inputs[wireName] !== 'undefined'){
+							newGate.addInput(inputs[wireName].id);
+							inputs[wireName].addOutput(newGate.id);
+						}else{
+							console.log('Undeclared wire ' + wireName); 
+							return callback('Undeclared wire ' + wireName, null, null, null);
+						}
+					}else if (EDIFModel.outputPorts.indexOf(portName) != -1){ //Establishing output connection.
+						if (typeof wires[wireName] !== 'undefined'){
+							newGate.addOutput(wires[wireName].id);
+							wires[wireName].setInput(newGate.id);
+						}else if (typeof outputs[wireName] !== 'undefined'){
+							newGate.addOutput(outputs[wireName].id);
+							outputs[wireName].setInput(newGate.id);
+						}else{
+							console.log('Undeclared wire ' + wireName);
+							return callback('Undeclared wire ' + wireName, null, null, null);
+						}
+					}else{
+						console.log('Undefined port ' + portName + ' for ' + EDIFModel.name);
+						return callback('Undefined port ' + portName + ' for ' + EDIFModel.name, null, null, null);
+					}
+					
+				}
+				gates.push(newGate);
 			}
-			gates.push(newGate);		
-			//console.log('*******');
 
 		}else{
 			console.log('Invalid line ' + lines[i]);
@@ -479,23 +628,7 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 		}
 	}
 	
-	/*for(var i = 0; i < gates.length; i++){
-		console.log(i + ':  ' + gates[i].model  + '(' + gates[i].id + ') connections: ');
 
-		var gateInputs = gates[i].inputs;
-		if (typeof gateInputs === 'undefined' || gateInputs.length == 0)
-			continue;
-		for(var j = 0; j < gateInputs.length; j++)
-			console.log('Input: ' + gates[i].getInputGate(j).toString());
-
-		var gateOutputs = gates[i].outputs;
-		if (typeof gateOutputs === 'undefined' || gateOutputs.length == 0)
-			continue;
-		for(var j = 0; j < gateOutputs.length; j++){
-			console.log('Outputs(' + j + '): ' + gates[i].getOutputGates(j).toString());
-		}
-		console.log('**********');
-	}*/
 
 	var allWires = new Array();
 	for(key in wires){
@@ -511,15 +644,7 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 		allWires.push(outputs[key]);
 	}
 
-		//console.log(allWires);
-		//console.log(typeof(allWires));
-		//console.log(Array);
-		//console.log(Array.prototype);
-		//console.log(allWires.length);
-		//console.log('----------');
-		//console.log(gates);
-		//console.log('-*-*-*-*-*-*-*-*-*-');
-
+		
 		for(i = 0; i < allWires.length; i++)
 		if (allWires[i].isFlyingWire()){
 			console.log('Warning, flying wire ');
@@ -529,16 +654,10 @@ module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist
 				var inputIndex = gates[j].inputs.indexOf(allWires[i].id);
 				var outputIndex = gates[j].outputs.indexOf(allWires[i].id);
 				if (inputIndex != -1){
-					//console.log('Trimming ' + allWires[i].toString() + ' from inputs ');
-					//console.log(gates[j]);
 					gates[j].inputs.splice(inputIndex, 1);
-					//console.log(gates[j]);
 				}
 				if(outputIndex != -1){
-					//console.log('Trimming ' + allWires[i].toString() + ' from outputs ');
-					//console.log(gates[j]);
 					gates[j].outputs.splice(outputIndex, 1);
-					//console.log(gates[j]);
 				}
 			}
 			allWires.splice(i, 1);
