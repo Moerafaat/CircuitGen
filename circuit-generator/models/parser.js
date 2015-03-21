@@ -50,13 +50,81 @@ function getAssignReplaceRegEx(wireName){
 	return new RegExp('\\b('+ wireName + ')\\b', 'gm');
 }
 
+function getCellDefineRegEx(){
+	return new RegExp('\\s*`celldefine([\\s\\S]+?)`endcelldefine\\s*', '');
+}
+
+function getSpecifyRegEx(){
+	return new RegExp('\\s*specify[\\s\\S]*?endspecify\\s*', '');
+}
 
 
-module.exports.parse = function parse(content, EDIFContent, callback){ //Netlist parsing function.
+
+
+module.exports.parseLibrary = function(content, callback){
+	var parsedEdif = {};
+	var timescaleRegex = /\s*`\s*timescale.*$/gm;
+	content = content.replace(timescaleRegex, '').trim();
+
+	var cellsDefinitions = {};
+	var cellDefineRegEx = getCellDefineRegEx();
+	while(cellDefineRegEx.test(content)){
+		cellDefineRegEx = getCellDefineRegEx();
+		var cell = cellDefineRegEx.exec(content)[1].trim();
+
+		var endmoduleRegex = /\s*endmodule\s*/g;
+		var moduleRegex = /\s*module (\w+)\s*\(?.*\)?\s*;\s*/gm;
+
+		var endmoduleCount = (cell.match(endmoduleRegex) || []).length; //Counting the occurences of 'endmodule'.
+		//console.log(endmoduleCount);
+
+		var moduleCount = (cell.match(moduleRegex) || []).length; //Counting the occurences of 'module'.
+		//console.log(moduleCount);
+
+		var warnings = [];
+
+		if(endmoduleCount != 1 || moduleCount != 1){
+			console.log('Invalid input');
+			return callback('Error while parsing the module ' + moduleName, {});
+		}
+		cell = cell.replace(endmoduleRegex, ''); //Removing 'endmodule'.
+
+		var moduleName = moduleRegex.exec(cell)[1];		
+		cell = cell.replace(moduleRegex, ''); //Removing module name.
+
+		var specifyRegex = getSpecifyRegEx();
+		cell = cell.replace(specifyRegex, '');
+
+		cellsDefinitions[moduleName] = cell;
+		content = content.replace(getCellDefineRegEx(), '');
+		cellDefineRegEx = getCellDefineRegEx();
+	}
+	for (key in cellsDefinitions){
+		var currentCell = cellsDefinitions[key];
+		var defLines = currentCell.split(/\s*;\s*/gm);
+		for(var i = 0; i < defLines.length; i++){
+			defLines[i] = defLines[i].trim();
+			if (defLines[i] == '')
+				defLines.splice(i--, 1);
+		}
+		//console.log(key + ':');
+		for(var i = 0; i < defLines.length; i++){
+			//console.log(i + ':');
+			//console.log(defLines[i]);
+		}
+	}
+
+
+	callback(null, {});
+};
+
+
+
+module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //Netlist parsing function.
 	var endmoduleRegex = /endmodule/g; //RegEx: Capturing 'endmodule'.
 	var commentRegex = /\/\/.*$/gm; //RegEx: Capturing comments RegEx.
 	var mCommentRegex = /\/\*(.|[\r\n])*?\*\//gm; //RegEx: Capturing multi-line comments RegEx.
-	var moduleRegex = /module (\w+)\(?.*\)?/gm; //RegEx: capturing module name.;
+	var moduleRegex =  /\s*module (\w+)\s*\(?.*\)?\s*;\s*/gm; //RegEx: capturing module name.;
 
 	EDIF = EDIFContent;
 

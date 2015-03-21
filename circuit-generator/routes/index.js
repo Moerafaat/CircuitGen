@@ -60,7 +60,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 		        fs.unlink(filePath); //Deleting uploaded file.
 		    }else{
 		    	content = data;
-		    	Parser.parse(content, edif, function(err, gates, wires, warnings){
+		    	Parser.parseNetlist(content, edif, function(err, gates, wires, warnings){
 		    		if(err){
 		    			console.log(err);
 		    			res.render('circuit', { title: 'Circuit',
@@ -89,7 +89,8 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 		    			var wiresMap = {};
 		    			for(var i = 0; i < wires.length; i++)
 		    				wiresMap[wires[i].id] = wires[i];
-		    			res.render('circuit', { title: 'Circuit',
+		    
+ 		    			res.render('circuit', { title: 'Circuit',
 		    									error: '',
 		    									graphGates: JSON.stringify(GraphingMaterial.gates),
 		    									graphWires: JSON.stringify(GraphingMaterial.adjaceny_list),
@@ -136,48 +137,60 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 				        fs.unlink(stdCellFilePath);
 				    }else{
 				    	content = data;
-				    	Parser.parse(content, edif, function(err, gates, wires, warnings){
-				    		if(err){
-				    			console.log(err);
-				    			res.render('circuit', { title: 'Circuit',
-				    									error: err,
-				    									graphGates: JSON.stringify([]),
-				    									graphWires: JSON.stringify([]),
-				    									graphMapper: JSON.stringify([]),
-				    									content: content});
-				    			fs.unlink(filePath); //Deleting processed file.
-				    			fs.unlink(stdCellFilePath);
+				    	Parser.parseLibrary(stdCellContent, function(err, parsedEdif){
+				    		if (err) {
+						    	console.log(err);
+						        res.status(500).send('Error');
+						        fs.unlink(filePath); //Deleting uploaded file.
+						        fs.unlink(stdCellFilePath);
 				    		}else{
-				    			var builder = new GraphBuilder(gates);
-				    			builder.LongestPathLayering(); // Layering of the DAG
-				    			builder.ProperLayering(); // Dummy nodes placement
-				    			builder.CrossingReduction(); // Crossing reduction
-				    			
-				    			var graph_settings = {
-				    				max_comp_w: 100,
-				    				max_comp_h: 50,
-				    				layer_spacing: 150,
-				    				node_spacing: 50,
-				    				left_marg: 10,
-				    				top_marg: 10
-				    			};
-				    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
-				    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
-				    			var wiresMap = {};
-				    			for(var i = 0; i < wires.length; i++)
-				    				wiresMap[wires[i].id] = wires[i];
-				    			res.render('circuit', { title: 'Circuit',
-				    									error: '',
-				    									graphGates: JSON.stringify(GraphingMaterial.gates),
-				    									graphWires: JSON.stringify(GraphingMaterial.adjaceny_list),
-				    									graphMapper: JSON.stringify(graphMapper),
-				    									connectionWires: JSON.stringify(wiresMap),
-				    									warnings: JSON.stringify(warnings),
-				    									content: content});
-				    			fs.unlink(filePath); //Deleting processed file.
-				    			fs.unlink(stdCellFilePath);
+				    			console.log(parsedEdif);
+				    			parsedEdif = edif;
+				    			Parser.parseNetlist(content, parsedEdif, function(err, gates, wires, warnings){
+						    		if(err){
+						    			console.log(err);
+						    			res.render('circuit', { title: 'Circuit',
+						    									error: err,
+						    									graphGates: JSON.stringify([]),
+						    									graphWires: JSON.stringify([]),
+						    									graphMapper: JSON.stringify([]),
+						    									content: content});
+						    			fs.unlink(filePath); //Deleting processed file.
+						    			fs.unlink(stdCellFilePath);
+						    		}else{
+						    			var builder = new GraphBuilder(gates);
+						    			builder.LongestPathLayering(); // Layering of the DAG
+						    			builder.ProperLayering(); // Dummy nodes placement
+						    			builder.CrossingReduction(); // Crossing reduction
+						    			
+						    			var graph_settings = {
+						    				max_comp_w: 100,
+						    				max_comp_h: 50,
+						    				layer_spacing: 150,
+						    				node_spacing: 50,
+						    				left_marg: 10,
+						    				top_marg: 10
+						    			};
+						    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
+						    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
+						    			var wiresMap = {};
+						    			for(var i = 0; i < wires.length; i++)
+						    				wiresMap[wires[i].id] = wires[i];
+						    			res.render('circuit', { title: 'Circuit',
+						    									error: '',
+						    									graphGates: JSON.stringify(GraphingMaterial.gates),
+						    									graphWires: JSON.stringify(GraphingMaterial.adjaceny_list),
+						    									graphMapper: JSON.stringify(graphMapper),
+						    									connectionWires: JSON.stringify(wiresMap),
+						    									warnings: JSON.stringify(warnings),
+						    									content: content});
+						    			fs.unlink(filePath); //Deleting processed file.
+						    			fs.unlink(stdCellFilePath);
+						    		}
+						    	}); //Parsing file content.
 				    		}
-				    	}); //Parsing file content.
+				    	});
+				    	
 						
 						
 				    }

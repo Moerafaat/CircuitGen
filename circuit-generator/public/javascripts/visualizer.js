@@ -92,16 +92,15 @@ function plotGraph(gGates, gWires, map, connections){
                       var dummyGateIndexIndex = gWire[l];
                       var dummyGateIndex = gWires[dummyGateIndexIndex][0];
                       var targetGate = gGates[dummyGateIndex];
-                      console.log('Reached: ');
-                      console.log(targetGate);
+                      //console.log('Reached: ');
+                      //console.log(targetGate);
                       while(targetGate.dummy){
                         wireVerts.push({x: targetGate.x, y: targetGate.y});
-                        dummyGateIndexIndex = dummyGateIndex;
+                        dummyGateIndexIndex = gWires[dummyGateIndex][0];
                         dummyGateIndex = gWires[dummyGateIndexIndex][0];
-                        targetGate = gGates[dummyGateIndex][0];
-                        console.log(targetGate);
+                        targetGate = gGates[dummyGateIndex];
                       }
-                      console.log(wireVerts);
+                      //console.log(wireVerts);
 
                       if (targetGate.inputs.length == 1)
                         graphWires.push({source: {id: graphGates[sourceGate.id].id, port: 'out'},
