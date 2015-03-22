@@ -175,8 +175,8 @@ GraphBuilder.prototype.CrossingReduction = function(){
 			}
 			crossings += LevelCrossings(this.gates, this.adjaceny_list, this.layers[i], this.layers[i-1]);
 		}
-		console.log(forgiveness_number);
-		console.log(crossings+ " " + lowest_crossings);
+		//console.log(forgiveness_number);
+		//console.log(crossings+ " " + lowest_crossings);
 		if(crossings < lowest_crossings){
 			lowest_crossings = crossings;
 			final_gates = this.gates;
@@ -196,8 +196,8 @@ GraphBuilder.prototype.CrossingReduction = function(){
 			}
 			crossings += LevelCrossings(this.gates, this.adjaceny_list, this.layers[i+1], this.layers[i]);
 		}
-		console.log(forgiveness_number);
-		console.log(crossings+ " " + lowest_crossings);
+		//console.log(forgiveness_number);
+		//console.log(crossings+ " " + lowest_crossings);
 		if(crossings < lowest_crossings){
 			lowest_crossings = crossings;
 			final_gates = this.gates;
