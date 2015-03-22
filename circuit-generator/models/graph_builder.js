@@ -160,26 +160,93 @@ GraphBuilder.prototype.CrossingReduction = function(){
 	}
 	this.layers[this.layers.length-1].sort(compareY(this.gates));
 
-	for(var i=this.layers.length-1; i>0; i--){ // Going left to right
+	var forgiveness_number = 5000;
+	var lowest_crossings = Number.MAX_VALUE;
+	var final_gates = this.gates;
+	var final_layers = this.layers;
+	var crossings;
 
-		BaryCenter(this.gates, this.adjaceny_list, this.layers, i, i-1, false);
+	while(forgiveness_number > 0){
+		crossings = 0;
+		for(var i=this.layers.length-1; i>0; i--){ // Going left to right
+			BaryCenter(this.gates, this.adjaceny_list, this.layers, i, i-1, false);
+			for(var j=0; j<this.layers[i-1].length; j++){ // Map barycenter to relative y-coordinate
+				this.gates[this.layers[i-1][j]].ry = j;
+			}
+			crossings += LevelCrossings(this.gates, this.adjaceny_list, this.layers[i], this.layers[i-1]);
+		}
+		console.log(forgiveness_number);
+		console.log(crossings+ " " + lowest_crossings);
+		if(crossings < lowest_crossings){
+			lowest_crossings = crossings;
+			final_gates = this.gates;
+			final_layers = this.layers;
+		}
+		else{
+			forgiveness_number--;
+		}
+		if(forgiveness_number <= 0)
+			break;
+
+		crossings = 0;
+		for(var i=0; i<this.layers.length-1; i++){ // Going right to left
+			BaryCenter(this.gates, this.adjaceny_list, this.layers, i, i+1, true);
+			for(var j=0; j<this.layers[i+1].length; j++){ // Map barycenter to relative y-coordinate
+				this.gates[this.layers[i+1][j]].ry = j;
+			}
+			crossings += LevelCrossings(this.gates, this.adjaceny_list, this.layers[i+1], this.layers[i]);
+		}
+		console.log(forgiveness_number);
+		console.log(crossings+ " " + lowest_crossings);
+		if(crossings < lowest_crossings){
+			lowest_crossings = crossings;
+			final_gates = this.gates;
+			final_layers = this.layers;
+		}
+		else{
+			forgiveness_number--;
+		}
 	}
 
-	for(var i=0; i<this.layers.length-1; i++){ // Going right to left
-		BaryCenter(this.gates, this.adjaceny_list, this.layers, i, i+1, true);
-	}
+	this.gates = final_gates;
+	this.layers = final_layers;
 
-	for(var i=0; i<this.layers.length; i++){ // Map barycenter to relative y-coordinate
+	/*for(var i=0; i<this.layers.length; i++){ // Map barycenter to relative y-coordinate
 		for(var j=0; j<this.layers[i].length; j++){
 			this.gates[this.layers[i][j]].ry = j;
 		}
-	}
+	}*/
 
 	// Restore the original orientation of the graph
 	this.RestoreCycles();
 	this.RestoreDoubleCycles();
 	// Cross Reduced Properly Layered DAG constructed
 };
+
+function LevelCrossings(gates, adjaceny_list, parent_layer, child_layer){
+	var crossings = 0;
+	for(var i=0; i<parent_layer.length-1; i++){
+		for(var j=0; j<adjaceny_list[parent_layer[i]].length; j++){
+			for(var k=i+1; k<parent_layer.length; k++){
+				for(var m=0; m<adjaceny_list[parent_layer[k]].length; m++){
+					if(gates[adjaceny_list[parent_layer[i]][j]].ry > gates[adjaceny_list[parent_layer[k]][m]].ry){
+						crossings++;
+					}
+				}
+			}
+		}
+	}
+	/*console.log(parent_layer);
+	console.log(child_layer);
+	console.log("Adjaceny List");
+	for(var i=0; i<parent_layer.length; i++){
+		console.log(parent_layer[i] + ": " + adjaceny_list[parent_layer[i]]);
+	}
+	console.log("Crossings: " + crossings);
+	console.log("-------------------");*/
+
+	return crossings;
+}
 
 function BaryCenter(gates, adjaceny_list, layers, layer1, layer2, is_reversed){
 	for(var i=0; i<layers[layer2].length; i++){
