@@ -17,6 +17,7 @@ var Type = {
 	BUF: 10,
 	XNOR: 11,
 	DFF: 12,
+	JUN: 13
 };
 module.exports.Type = Type;
 
@@ -38,6 +39,7 @@ var VerilogToJointMap = {
 	not: 'Not',
 	buf: 'Repeater',
 	dff: 'Dff',
+	jun: 'Junction',
 	InputPort: 'Input',
 	OutputPort: 'Output'
 };
@@ -51,6 +53,7 @@ module.exports.VerilogToJointMap = {
 	not: 'Not',
 	buf: 'Repeater',
 	dff: 'Dff',
+	jun: 'Junction',
 	InputPort: 'Input',
 	OutputPort: 'Output'
 };
@@ -93,10 +96,13 @@ function getGateName(gate){
 			name = 'xnor';
 			break;
 		case Type.BUF:
-			name - 'buf';
+			name = 'buf';
 			break;
 		case Type.DFF:
-			name - 'dff';
+			name = 'dff';
+			break;
+		case Type.JUN:
+			name = 'junction';
 			break;
 		default:
 			name = 'unknown';
@@ -193,6 +199,28 @@ var Component = function(inputs, outputs){ //Component base model.
 			this.setOpenOutputTerminals(this.openOutputTerminals - 1);
 		}
 	};
+
+	this.removeInput = function(inputPort){
+		if(typeof inputPort === 'undefined')
+			return;
+		var inputIndex = this.inputs.indexOf(inputPort);
+		if (inputIndex == -1)
+			return;
+		this.inputs.splice(inputIndex, 1);
+		this.addGate(this);
+		this.setOpenInputTerminals(this.openInputTerminals + 1);
+	}
+
+	this.removeOutput = function(outputPort){
+		if(typeof outputPort === 'undefined')
+			return;
+		var outputIndex = this.inputs.indexOf(outputPort);
+		if (outputIndex == -1)
+			return;
+		this.outputs.splice(outputIndex, 1);
+		this.addGate(this);
+		this.setOpenOutputTerminals(this.openOutputTerminals + 1);
+	}
 
 	this.clearInputs = function(){
 		this.inputs = [];
@@ -394,6 +422,17 @@ function buf(model, inputs, outputs){
 	this.addGate(this);
 }
 
+junction.prototype = new Component(); //Buffer gate model.
+junction.prototype.constructor = junction;
+function junction(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 1;
+	this.defaultInputTerminals = 1;
+	this.type = Type.JUN;
+	this.model = model;
+	this.addGate(this);
+}
+
 dff.prototype = new Component(); //Buffer gate model.
 dff.prototype.constructor = dff;
 function dff(model, inputs, outputs){
@@ -443,6 +482,7 @@ module.exports.buf = buf;
 module.exports.dff = dff;
 module.exports.input = input;
 module.exports.output = output;
+module.exports.junction = junction;
 
 module.exports.component = Component;
 
@@ -633,6 +673,12 @@ PremEDIF = {
 		inputPorts: ['A'],
 		outputPorts: ['Y'],
 		primitive: 'buf'
+	},
+	P_jun: {
+		name: 'jun',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'jun'
 	},
 	getJointMap: function(){
 		var map = {};

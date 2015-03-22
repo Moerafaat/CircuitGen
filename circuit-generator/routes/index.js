@@ -128,6 +128,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 		    	var content; //File content holder.
 				fs.readFile(filePath, 'utf8', function read(err, data) { //Reading file content.
 				    if (err) {
+				    	console.log('READ ERROR');
 				    	console.log(err);
 				        res.status(500).send('Error');
 				        fs.unlink(filePath); //Deleting uploaded file.
@@ -136,6 +137,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 				    	content = data;
 				    	Parser.parseLibrary(stdCellContent, function(err, parsedEdif){
 				    		if (err) {
+				    			console.log('LIB ERROR');
 						    	console.log(err);
 						        res.status(500).send('Error');
 						        fs.unlink(filePath); //Deleting uploaded file.
@@ -143,6 +145,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 				    		}else{
 				    			Parser.parseNetlist(content, parsedEdif, function(err, gates, wires, warnings){
 						    		if(err){
+						    			console.log('NETLIST ERROR');
 						    			console.log(err);
 						    			res.render('circuit', { title: 'Circuit',
 						    									error: err,
