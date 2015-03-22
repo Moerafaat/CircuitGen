@@ -26,6 +26,8 @@ var WireType = {
 	CONNECTION: 2
 };
 
+module.exports.WireType = WireType;
+
 var VerilogToJointMap = {
 	and: 'And',
 	nand: 'Nand',
@@ -39,8 +41,20 @@ var VerilogToJointMap = {
 	InputPort: 'Input',
 	OutputPort: 'Output'
 };
+module.exports.VerilogToJointMap = {
+	and: 'And',
+	nand: 'Nand',
+	or: 'Or',
+	nor: 'Nor',
+	xor: 'Xor',
+	xnor: 'Xnor',
+	not: 'Not',
+	buf: 'Repeater',
+	dff: 'Dff',
+	InputPort: 'Input',
+	OutputPort: 'Output'
+};
 
-module.exports.WireType = WireType;
 
 function getGateName(gate){
 	var name;
@@ -511,6 +525,19 @@ function wire(wireType, input, outputs){
 		this.vertices = [];
 		Component.wires[this.id] = this;
 	}
+
+	this.getInputGate = function(){
+		if (this.inPort == '')
+			return {};
+		return Component.gates[this.inPort];
+	}
+
+	this.getOutputGates = function(index){
+		if (index >= this.outPorts.length)
+			return {};
+		else
+			return Component.gates[this.outPorts[index]];
+	}
 };
 
 wire.prototype.toString = function(){
@@ -556,6 +583,68 @@ module.exports.Readable = function(component, wires){
 		outputs: outputWires,
 		model: component.model
 	};
+};
+
+PremEDIF = {
+	P_and: {
+		name: 'and',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'and'
+	},
+	P_or: {
+		name: 'or',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'or'
+	},
+	P_xor: {
+		name: 'xor',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'xor'
+	},
+	P_nor: {
+		name: 'nor',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'nor'
+	},
+	P_xnor: {
+		name: 'xnor',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'xnor'
+	},
+	P_nand: {
+		name: 'nand',
+		inputPorts: ['A', 'B'],
+		outputPorts: ['Y'],
+		primitive: 'nand'
+	},
+	P_not: {
+		name: 'not',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'not'
+	},
+	P_buf: {
+		name: 'buf',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'buf'
+	},
+	getJointMap: function(){
+		var map = {};
+		for (key in this){
+			if (key == 'getJointMap')
+				continue;
+			map[key]= VerilogToJointMap[this[key].primitive];
+		}
+		map['InputPort'] = VerilogToJointMap['InputPort'];
+		map['OutputPort'] = VerilogToJointMap['OutputPort'];
+		return map;
+	}
 };
 
 
@@ -658,73 +747,19 @@ var EDIF = {
 				continue;
 			map[key]= VerilogToJointMap[this[key].primitive];
 		}
-		map['InputPort'] = VerilogToJointMap['InputPort'];
-		map['OutputPort'] = VerilogToJointMap['OutputPort'];
-		return map;
-	}
-};
 
-var PremEDIF = {
-	P_and: {
-		name: 'and',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'and'
-	},
-	P_or: {
-		name: 'or',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'or'
-	},
-	P_xor: {
-		name: 'xor',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'xor'
-	},
-	P_nor: {
-		name: 'nor',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'nor'
-	},
-	P_xnor: {
-		name: 'xnor',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'xnor'
-	},
-	P_nand: {
-		name: 'nand',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'nand'
-	},
-	P_not: {
-		name: 'not',
-		inputPorts: ['A'],
-		outputPorts: ['Y'],
-		primitive: 'not'
-	},
-	P_buf: {
-		name: 'buf',
-		inputPorts: ['A'],
-		outputPorts: ['Y'],
-		primitive: 'buf'
-	},
-	getJointMap: function(){
-		var map = {};
-		for (key in this){
+		for (key in PremEDIF){
 			if (key == 'getJointMap')
 				continue;
-			map[key]= VerilogToJointMap[this[key].primitive];
+			map[key]= VerilogToJointMap[PremEDIF[key].primitive];
 		}
 		map['InputPort'] = VerilogToJointMap['InputPort'];
 		map['OutputPort'] = VerilogToJointMap['OutputPort'];
 		return map;
 	}
 };
+
+
 module.exports.PremEDIF = PremEDIF;
 
 var TestEDIF = {
@@ -870,7 +905,10 @@ var TestEDIF = {
 				continue;
 			map[key]= VerilogToJointMap[this[key].primitive];
 		}
-		for (key in PremEDIF){
+		console.log(module.exports.PremEDIF);
+		for (key in module.exports.PremEDIF){
+			console.log(key + ':');
+			console.log(PremEDIF[key]);
 			if (key == 'getJointMap')
 				continue;
 			map[key]= VerilogToJointMap[PremEDIF[key].primitive];

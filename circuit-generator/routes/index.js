@@ -141,7 +141,6 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 						        fs.unlink(filePath); //Deleting uploaded file.
 						        fs.unlink(stdCellFilePath);
 				    		}else{
-				    			console.log(parsedEdif);
 				    			Parser.parseNetlist(content, parsedEdif, function(err, gates, wires, warnings){
 						    		if(err){
 						    			console.log(err);
@@ -168,7 +167,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 						    				top_marg: 10
 						    			};
 						    			var GraphingMaterial = builder.AssignAbsoluteValues(graph_settings); // Give Graph absolute values
-						    			var graphMapper = edif.getJointMap(); //Mapping gates to logic digarams.
+						    			var graphMapper = parsedEdif.getJointMap(); //Mapping gates to logic digarams.
 						    			var wiresMap = {};
 						    			for(var i = 0; i < wires.length; i++)
 						    				wiresMap[wires[i].id] = wires[i];
