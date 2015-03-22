@@ -3,7 +3,7 @@ module booth_encoder(a, b);
     output b;
     wire [18:0] w;
     AND2X1 g0 (
-        .A(w[3]),
+        .A(a[0]),
         .B(a[1]),
         .Y(w[0])
     );
@@ -13,7 +13,7 @@ module booth_encoder(a, b);
         .Y(w[1])
     );
     OR2X1 g2 (
-        .A(a[4]),
+        .A(w[10]),
         .B(a[5]),
         .Y(w[2])
     );
