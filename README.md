@@ -1,5 +1,5 @@
 
-##**Digital Designer Project 1: Digital Circuit Realizer (master branch)**
+##**Digital Designer Project 1: Digital Circuit Realizer**
 ###*By Ahmed A. Agiza and Mohammed R. Anany*
 
 ####Project Description:
