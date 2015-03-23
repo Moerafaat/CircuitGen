@@ -41,6 +41,11 @@ router.get('/about', function(req, res){ //Netlist upload view.
 	res.render('about', {title: 'About NCG'});
 });
 
+router.get('/circuit', function(req, res){ //Netlist upload view.
+	req.flash('error', 'Please a Verilog netlist file to process.')
+	res.redirect('/');
+});
+
 
 router.post('/circuit', function(req, res){ //Netlist file parser.
 	if(typeof(req.files.netlist) === 'undefined'){
@@ -67,6 +72,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 		    									graphGates: JSON.stringify([]),
 		    									graphWires: JSON.stringify([]),
 		    									graphMapper: JSON.stringify([]),
+		    									connectionWires: JSON.stringify([]),
 		    									content: content});
 		    			fs.unlink(filePath); //Deleting processed file.
 		    		}else{
@@ -152,6 +158,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 						    									graphGates: JSON.stringify([]),
 						    									graphWires: JSON.stringify([]),
 						    									graphMapper: JSON.stringify([]),
+						    									connectionWires: JSON.stringify([]),
 						    									content: content});
 						    			fs.unlink(filePath); //Deleting processed file.
 						    			fs.unlink(stdCellFilePath);
