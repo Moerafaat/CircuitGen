@@ -11,12 +11,14 @@ var xor = Component.xor;
 var xnor = Component.xnor;
 var not = Component.not;
 var buf = Component.buf;
+var jun = Component.junction;
 var inputPort = Component.input;
 var outputPort = Component.output;
 var WireType = Component.WireType;
 var VerilogToJointMap = Component.VerilogToJointMap;
 var PremEDIF = Component.PremEDIF;
 var EDIF;
+
 
 function getGatesRegEx(){
 	var gates = "";
@@ -29,7 +31,7 @@ function getGatesRegEx(){
 		if(i < models.length - 1)
 			 gates = gates + "|";
 	}
-	return new RegExp('^\\s*(' + gates + ')\\s+(\\w+)\\s*\\(([\\(\\[\\)\\],\\s\\.\\w\\r\\n\\)]*)\\)\\s*$', 'gm');
+	return new RegExp('^\\s*(' + gates + ')\\s+(\\S+)\\s*\\(([\\(\\[\\)\\],\\S\\s\\.\\w\\r\\n\\)]*)\\)\\s*$', 'gm');
 }
 
 function getPrimRegEx(){
@@ -49,7 +51,7 @@ function getWireRegEx(identifier){
 }
 
 function getBusRegEx(identifier){
-	return new RegExp('^\\s*' +  identifier + '\\s*\\[(\\d+):(\\d+)\\]\\s*(\\S+)\\s*$', 'gm');
+	return new RegExp('^\\s*' +  identifier + '\\s+\\[\\s*(\\d+)\\s*:\\s*(\\d+)\\s*\\]\\s*(\\S+)\\s*$', 'gm');
 }
 
 function getParamRegEx(){
@@ -60,8 +62,16 @@ function getAssignRegEx(){
 	return new RegExp('\\s*assign\\s*(\\S+)\\s*=\\s*(\\S+)\\s*', 'gm');
 }
 
-function getAssignReplaceRegEx(wireName){
-	return new RegExp('\\b('+ wireName + ')\\b', 'gm');
+function getAssignReplaceRegEx(wn){
+	wn = wn.replace(new RegExp('\\\\', 'm'), '\\\\');
+	wn = wn.replace(new RegExp('\\.', 'm'), '\\.');
+	wn = wn.replace(new RegExp('\\+', 'm'), '\\+');
+	wn = wn.replace(new RegExp('\\*', 'm'), '\\*');
+	wn = wn.replace(new RegExp('\\[', 'm'), '\\[');
+	wn = wn.replace(new RegExp('\\(', 'm'), '\\(');
+	wn = wn.replace(new RegExp('\\]', 'm'), '\\]');
+	wn = wn.replace(new RegExp('\\)', 'm'), '\\)');
+	return new RegExp('([ \\(])\\s*' + wn + '\\s*([ \\)])', 'gm');
 }
 
 function getCellDefineRegEx(){
@@ -185,55 +195,107 @@ module.exports.parseLibrary = function(content, callback){
 				cellOutputs[wireName] = new wire(WireType.OUTPUT);
 			}else if (primRegex.test(defLines[i])){
 				if (i != defLines.length - 1){
-					var interComponents = {};
-					var interGates = [];
-					for(var z = i; z < defLines.length; z++){
-						var newInterComponent = getPrimGate(defLines[z]);
-						for(var x = 0; x < newInterComponent.inputs.length; x++){
-							if(typeof(cellInputs[newInterComponent.inputs[x]]) === 'undefined' &&
-							   typeof(cellOutputs[newInterComponent.inputs[x]]) === 'undefined' &&
-							   typeof(cellInternalWires[newInterComponent.inputs[x]]) === 'undefined'){
-								var newInputWire = new wire(WireType.CONNECTION);
-								newInputWire.addOutput(newInterComponent.gate.id);
-								newInterComponent.gate.addInput(newInputWire.id);
-								cellInternalWires[newInterComponent.inputs[x]] = newInputWire;
-							}else if (typeof(cellInputs[newInterComponent.inputs[x]]) === 'undefined' &&
-							   typeof(cellOutputs[newInterComponent.inputs[x]]) === 'undefined' &&
-							   typeof(cellInternalWires[newInterComponent.inputs[x]]) !== 'undefined'){
-								var currentWire = cellInternalWires[newInterComponent.inputs[x]];
-								currentWire.addOutput(newInterComponent.gate.id);
-								newInterComponent.gate.addInput(currentWire.id);
-								cellInternalWires[newInterComponent.inputs[x]] = currentWire;
-							}
-						}
-						for(var x = 0; x < newInterComponent.outputs.length; x++){
-							if(typeof(cellInputs[newInterComponent.outputs[x]]) === 'undefined' &&
-							   typeof(cellOutputs[newInterComponent.outputs[x]]) === 'undefined' &&
-							   typeof(cellInternalWires[newInterComponent.inputs[x]]) === 'undefined'){
-								var newInputWire = new wire(WireType.CONNECTION);
-								newInputWire.setInput(newInterComponent.gate.id);
-								newInterComponent.gate.addOutput(newInputWire.id);
-								cellInternalWires[newInterComponent.outputs[x]] = newInputWire;
-							}else if (typeof(cellInputs[newInterComponent.outputs[x]]) === 'undefined' &&
-							   typeof(cellOutputs[newInterComponent.outputs[x]]) === 'undefined' &&
-							   typeof(cellInternalWires[newInterComponent.outputs[x]]) !== 'undefined'){
-								var currentWire = cellInternalWires[newInterComponent.outputs[x]];
-								currentWire.setInput(newInterComponent.gate.id);
-								newInterComponent.gate.addOutput(currentWire.id);
-								cellInternalWires[newInterComponent.outputs[x]] = currentWire;
-							}
-						}
-						interComponents[newInterComponent.gate.id] = newInterComponent;
-					}
 					
-					for(var k in interComponents){
-						interGates.push(interComponents[k].gate);
-					}
+					cellObject.defLines = [];
+					for(var z = i; z < defLines.length; z++)
+						cellObject.defLines.push(defLines[z]);
 					cellObject.compound = true;
 					cellObject.primitive = 'compound';
-					cellObject.getComponent = function(callback){
-						callback(interGates, cellInternalWires);
-					}
+					cellObject.getComponent = function(cb){return (function(cbb, co){
+						var interComponents = {};
+						var interGates = [];
+						for(var z = 0; z < co.defLines.length; z++){
+							var newInterComponent = getPrimGate(co.defLines[z]);
+							for(var x = 0; x < newInterComponent.inputs.length; x++){
+								if(typeof(cellInputs[newInterComponent.inputs[x]]) === 'undefined' &&
+								   typeof(cellOutputs[newInterComponent.inputs[x]]) === 'undefined' &&
+								   typeof(cellInternalWires[newInterComponent.inputs[x]]) === 'undefined'){
+									var newInputWire = new wire(WireType.CONNECTION);
+									newInputWire.addOutput(newInterComponent.gate.id);
+									newInterComponent.gate.addInput(newInputWire.id);
+									cellInternalWires[newInterComponent.inputs[x]] = newInputWire;
+								}else if (typeof(cellInputs[newInterComponent.inputs[x]]) === 'undefined' &&
+								   typeof(cellOutputs[newInterComponent.inputs[x]]) === 'undefined' &&
+								   typeof(cellInternalWires[newInterComponent.inputs[x]]) !== 'undefined'){
+									var currentWire = cellInternalWires[newInterComponent.inputs[x]];
+									currentWire.addOutput(newInterComponent.gate.id);
+									newInterComponent.gate.addInput(currentWire.id);
+									cellInternalWires[newInterComponent.inputs[x]] = currentWire;
+								}
+							}
+							for(var x = 0; x < newInterComponent.outputs.length; x++){
+								if(typeof(cellInputs[newInterComponent.outputs[x]]) === 'undefined' &&
+								   typeof(cellOutputs[newInterComponent.outputs[x]]) === 'undefined' &&
+								   typeof(cellInternalWires[newInterComponent.outputs[x]]) === 'undefined'){
+									var newInputWire = new wire(WireType.CONNECTION);
+									newInputWire.setInput(newInterComponent.gate.id);
+									newInterComponent.gate.addOutput(newInputWire.id);
+									cellInternalWires[newInterComponent.outputs[x]] = newInputWire;
+								}else if (typeof(cellInputs[newInterComponent.outputs[x]]) === 'undefined' &&
+								   typeof(cellOutputs[newInterComponent.outputs[x]]) === 'undefined' &&
+								   typeof(cellInternalWires[newInterComponent.outputs[x]]) !== 'undefined'){
+									var currentWire = cellInternalWires[newInterComponent.outputs[x]];
+									currentWire.setInput(newInterComponent.gate.id);
+									newInterComponent.gate.addOutput(currentWire.id);
+									cellInternalWires[newInterComponent.outputs[x]] = currentWire;
+								}
+							}
+							interComponents[newInterComponent.gate.id] = newInterComponent;
+						}
+						
+						for(var l = 0; l < cellObject.inputPorts.length; l++){
+							var hasInput = false;
+							var bufPlaced = false;
+							var inBuf;
+							var inBufWire;
+							var inBufWireName;
+							var firstComponentKey;
+							for(var j in interComponents){
+								if(interComponents[j].inputs.indexOf(cellObject.inputPorts[l]) != -1){
+									if(!hasInput){
+										hasInput = true;
+										firstComponentKey = j;
+									}else{
+										var inGate = interComponents[j].gate;
+										if(!bufPlaced){
+											bufPlaced = true;
+											inBuf = new jun('P_jun');
+											inBufWire = new wire(WireType.CONNECTION);
+											inBufWireName = 'buf_connection'  + Date.now();
+
+											inBufWire.setInput(inBuf.id);
+											inBuf.addOutput(inBufWire.id);
+
+											var firstGate = interComponents[firstComponentKey].gate;
+
+											inBufWire.addOutput(firstGate.id);
+											firstGate.addInput(inBufWire.id);
+
+											inBufWire.addOutput(inGate.id);
+											inGate.addInput(inBufWire.id);
+
+											cellInternalWires[inBufWireName] = inBufWire;
+											interComponents[j].gate = inGate;
+											interComponents[firstComponentKey].gate = firstGate;
+										}else{
+											inBufWire.addOutput(inGate.id);
+											inGate.addInput(inBufWire.id);
+											cellInternalWires[inBufWireName] = inBufWire;
+											interComponents[j].gate = inGate;
+										}
+									}
+								}
+							}
+							if (bufPlaced)
+								interGates.push(inBuf);
+								
+						}
+						
+						for(var k in interComponents){
+							interGates.push(interComponents[k].gate);
+						}
+						cbb(interGates, cellInternalWires);
+					})(cb, this)};
 					break;
 				}else{
 					var primRegex = getPrimRegEx();
@@ -334,7 +396,7 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 						lhsWire = outputs[lhs];
 					}else{
 						console.log('Warning, undefined wire ' + lhs);
-						warnings.push('Warning, undefined wires ' + lhs + '.');
+						warnings.push('Warning, undefined wire ' + lhs + '.');
 						continue;
 					}
 
@@ -349,7 +411,7 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 						rhsWire = outputs[rhs];
 					}else{
 						console.log('Warning, undefined wire ' + rhs);
-						warnings.push('Warning, undefined wires ' + rhs + '.');
+						warnings.push('Warning, undefined wire ' + rhs + '.');
 						continue;
 					}
 
@@ -401,11 +463,11 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 								if (j == i)
 									continue;
 								else{
-									var before =  lines[j]; 
+									//var before =  lines[j]; 
 									var replacementRegex = getAssignReplaceRegEx(lhs);
-									lines[j] = lines[j].replace(replacementRegex, rhs);
-									if (before != lines[j])
-										console.log('Replaced ' + before + ' with ' + lines[j]);
+									lines[j] = lines[j].replace(replacementRegex, '$1' + rhs + '$2');
+									//if (before != lines[j])
+										//console.log('Replaced ' + before + ' with ' + lines[j]);
 								}
 							}
 					}else if (rhsWire.type == WireType.CONNECTION){
@@ -442,7 +504,10 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 		}
 	}
 
+	var ff = -1;	
 	for(var i = 0; i < lines.length; i++){ //Parsing wires.
+
+		ff++;
 		lines[i] = lines[i].trim();
 		if (lines[i] == '')
 			continue;
@@ -454,23 +519,19 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 		var outputRegex = getWireRegEx('output'); //RegEx: Capturing output.
 		var outputBusRegex = getBusRegEx('output'); //RegEx: Capturing output bus.
 
-		if (wireRegex.test(lines[i])){ //Parsing single wire.
-			var wireRegex = getWireRegEx('wire');
-			var wireName = wireRegex.exec(lines[i])[1];
-			if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
-				wires [wireName] = new wire();
-				//console.log('Captured wire: ' + wireName);
-			}else{
-				console.log('Parsing error, duplicate declaration ' + wireName);
-				console.log(i + ' ' + lines[i]);
-				return callback('Parsing error, duplicate declaration ' + wireName, null, null, null);
-			}
-		}else if (busRegex.test(lines[i])){ //Parsing bus.
+
+		if (busRegex.test(lines[i])){ //Parsing bus.
 			var busRegex = getBusRegEx('wire');
 			var bus = busRegex.exec(lines[i]);
 			var busMSB = parseInt(bus[1]);
 			var busLSB = parseInt(bus[2]);
 			var busName = bus[3];
+			if (Object.prototype.hasOwnProperty(busName) || Array.prototype.hasOwnProperty(busName)){
+				console.log(busName +' conflicting with prototype, replcaing..');
+				for(var x = i; x < lines.length; x++)
+					lines[x] = lines[x].replace(new RegExp('\\b' + busName + '\\b', 'gm'), busName + '__').trim();
+				busName = busName + '__';
+			}
 			if(busLSB == busMSB){
 				console.log('Parsing error, invalid bus length' + busMSB + ':' + busLSB);
 				return callback('Parsing error, invalid bus length' + busMSB + ':' + busLSB, null, null, null);
@@ -483,6 +544,7 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
+						console.log(i);
 						return callback('Parsing error, duplicate declaration '  + wireName , null, null, null);
 					}
 				}
@@ -500,26 +562,19 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 				}
 			}
 			console.log('Bus [' + busMSB + ':' + busLSB + '] ' + busName);
-		}else if (inputRegex.test(lines[i])){ //Parsing input wire.
-			var inputRegex = getWireRegEx('input');
-			var wireName = inputRegex.exec(lines[i])[1];
-			if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
-				var newInput = new inputPort();
-				inputs [wireName] = new wire(WireType.INPUT, newInput.id);
-				newInput.addOutput(inputs[wireName].id);
-				gates.push(newInput);
-				//console.log('Captured input: ' + wireName);
-			}else{
-				console.log('Parsing error, duplicate declaration ' + wireName);
-				console.log(i + ' ' + lines[i]);
-				return callback('Parsing error, duplicate declaration ' + wireName, null, null, null);
-			}
 		}else if (inputBusRegex.test(lines[i])){ //Parsing input bus.
 			var inputBusRegex =  getBusRegEx('input');
 			var bus = inputBusRegex.exec(lines[i]);
 			var busMSB = parseInt(bus[1]);
 			var busLSB = parseInt(bus[2]);
 			var busName = bus[3];
+			if (Object.prototype.hasOwnProperty(busName) || Array.prototype.hasOwnProperty(busName)){
+				console.log(busName +' conflicting with prototype, replcaing..');
+				for(var x = i; x < lines.length; x++)
+					lines[x] = lines[x].replace(new RegExp('\\b' + busName + '\\b', 'gm'), busName + '__').trim();
+				busName = busName + '__';
+			}
+
 			if(busLSB == busMSB){
 				console.log('Parsing error, invalid input bus length ' + busMSB + ':' + busLSB);
 				return callback('Parsing error, invalid input bus length ' + busMSB + ':' + busLSB, null, null, null);
@@ -550,32 +605,27 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
+						console.log('A ' + i);
 						return callback('Parsing error, duplicate declaration ' + wireName, null, null, null);
 					}
 				}
 			}
 			//console.log('Input Bus [' + busMSB + ':' + busLSB + '] ' + busName);
 
-		}else if (outputRegex.test(lines[i])){ //Parsing output wire.
-			var outputRegex = getWireRegEx('output');
-			var wireName = outputRegex.exec(lines[i])[1];
-			if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
-					var newOutput = new outputPort();
-					outputs [wireName] = new wire(WireType.OUTPUT,'',[newOutput.id]);
-					newOutput.addInput(outputs[wireName].id);
-					gates.push(newOutput);
-				//console.log('Captured output: ' + wireName);
-			}else{
-				console.log('Parsing error, duplicate declaration ' + wireName);
-				console.log(i + ' ' + lines[i]);
-				return callback('Parsing error, duplicate declaration ' + wireName, null, null, null);
-			}
 		}else if (outputBusRegex.test(lines[i])){ //Parsing output bus.
 			var outputBusRegex =  getBusRegEx('output');
 			var bus = outputBusRegex.exec(lines[i]);
 			var busMSB = parseInt(bus[1]);
 			var busLSB = parseInt(bus[2]);
 			var busName = bus[3];
+			if (Object.prototype.hasOwnProperty(busName) || Array.prototype.hasOwnProperty(busName)){
+				console.log(busName +' conflicting with prototype, replcaing..');
+				for(var x = i; x < lines.length; x++)
+					lines[x] = lines[x].replace(new RegExp('\\b' + busName + '\\b', 'gm'), busName + '__').trim();
+				
+				busName = busName + '__';
+			}
+
 			if(busLSB == busMSB){
 				console.log('Parsing error, invalid output bus length ' + busMSB + ':' + busLSB);
 				return callback('Parsing error, invalid output bus length ' + busMSB + ':' + busLSB, null, null, null);
@@ -590,6 +640,7 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
+						console.log('B ' + i);
 						return callback('Parsing error, duplicate declaration ' + wireName, null, null, null);
 					}
 				}
@@ -605,9 +656,79 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 					}else{
 						console.log('Parsing error, duplicate declaration ' + wireName);
 						console.log(lines[i]);
+						console.log('C ' + i);
 						return callback('Parsing error, duplicate declaration ' + wireName, null, null, null);
 					}
 				}
+			}
+		}else if (wireRegex.test(lines[i])){ //Parsing single wire.
+			var wireRegex = getWireRegEx('wire');
+			var wireName = wireRegex.exec(lines[i])[1];
+			if (Object.prototype.hasOwnProperty(wireName) || Array.prototype.hasOwnProperty(wireName)){
+				console.log(wireName +' conflicting with prototype, replcaing..');
+				for(var x = i; x < lines.length; x++)
+					lines[x] = lines[x].replace(new RegExp('\\b' + wireName + '\\b', 'gm'), wireName + '__').trim();
+				wireName = wireName + '__';
+			}
+			if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
+				wires [wireName] = new wire();
+				//console.log('Captured wire: ' + wireName);
+			}else{
+				console.log('Parsing error, duplicate declaration ' + wireName);
+				/*console.log('0000WIRES00000');
+				for(key in wires){
+					if(new RegExp('\\s*_\\d+_\\s*', '').test(key))
+						continue;
+					console.log(key + ':');
+					console.log(wires[key]);
+				}
+				console.log('0000ENDWIRES0000');*/
+				console.log(i + ' ' + lines[i]);
+				console.log('AA ' + ff);
+				return callback('Parsing error, duplicate declaration ' + wireName, null, null, null);
+			}
+		}else if (inputRegex.test(lines[i])){ //Parsing input wire.
+			var inputRegex = getWireRegEx('input');
+			var wireName = inputRegex.exec(lines[i])[1];
+			if (Object.prototype.hasOwnProperty(wireName) || Array.prototype.hasOwnProperty(wireName)){
+				console.log(wireName +' conflicting with prototype, replcaing..');
+				for(var x = i; x < lines.length; x++)
+					lines[x] = lines[x].replace(new RegExp('\\b' + wireName + '\\b', 'gm'), wireName + '__').trim();
+				wireName = wireName + '__';
+			}
+			if (typeof wires[wireName] === 'undefined'){ //Checking for double declaration.
+				var newInput = new inputPort();
+				inputs [wireName] = new wire(WireType.INPUT, newInput.id);
+				newInput.addOutput(inputs[wireName].id);
+				gates.push(newInput);
+				//console.log('Captured input: ' + wireName);
+			}else{
+				console.log('Parsing error, duplicate declaration ' + wireName);
+				console.log(i + ' ' + lines[i]);
+				console.log('BB ' + i);
+				return callback('Parsing error, duplicate declaration ' + wireName, null, null, null);
+			}
+		}else if (outputRegex.test(lines[i])){ //Parsing output wire.
+			var outputRegex = getWireRegEx('output');
+			var wireName = outputRegex.exec(lines[i])[1];
+			if (Object.prototype.hasOwnProperty(wireName) || Array.prototype.hasOwnProperty(wireName)){
+				console.log(wireName +' conflicting with prototype, replcaing..');
+				for(var x = i; x < lines.length; x++){
+					lines[x] = lines[x].replace(new RegExp('\\b' + wireName + '\\b', 'gm'), wireName + '__').trim();
+				}
+				wireName = wireName + '__';
+			}
+			if (typeof outputs[wireName] === 'undefined'){ //Checking for double declaration.
+					var newOutput = new outputPort();
+					outputs [wireName] = new wire(WireType.OUTPUT,'',[newOutput.id]);
+					newOutput.addInput(outputs[wireName].id);
+					gates.push(newOutput);
+				//console.log('Captured output: ' + wireName);
+			}else{
+				console.log('Parsing error, duplicate declaration ' + wireName);
+				console.log(i + ' ' + lines[i]);
+				console.log('CC ' + i);
+				return callback('Parsing error, duplicate declaration ' + wireName, null, null, null);
 			}
 		}else 
 			break;
@@ -642,6 +763,31 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 
 			if (EDIFModel.hasOwnProperty('compound') && EDIFModel.compound){
 				EDIFModel.getComponent(function(subGates, subWires){
+
+							for(var z = 0; z < subGates.length; z++){
+								if(subGates[z].inputs.length > 0){
+									for(var zz = 0; zz < subGates[z].inputs.length; zz++){
+										var subWKey;
+										for(var key in subWires){
+											if(subWires[key].id ==  subGates[z].inputs[zz]){
+												subWKey = key;
+												break;
+											}
+										}
+										if (typeof(subWKey) === 'undefined'){
+											console.log('Unknown ' + subGates[z].inputs[zz]);
+											break;
+										}
+										if(subWires[subWKey].isFlyingWire()){
+											console.log('Flying subwire: ' + subWKey);
+											subGates[z].removeInput(subWires[subWKey].id);
+											delete subWires[subWKey];
+											subWKey = undefined;
+											z--;
+										}
+									}
+								}
+							}
 							for (key in subWires){
 								wires[key] = subWires[key];
 							}
@@ -744,6 +890,9 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 						}else if (typeof inputs[wireName] !== 'undefined'){
 							newGate.addInput(inputs[wireName].id);
 							inputs[wireName].addOutput(newGate.id);
+						}else if (typeof outputs[wireName] !== 'undefined'){
+							newGate.addInput(outputs[wireName].id);
+							outputs[wireName].addOutput(newGate.id);
 						}else{
 							console.log('Undeclared wire ' + wireName); 
 							return callback('Undeclared wire ' + wireName, null, null, null);
@@ -755,6 +904,9 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 						}else if (typeof outputs[wireName] !== 'undefined'){
 							newGate.addOutput(outputs[wireName].id);
 							outputs[wireName].setInput(newGate.id);
+						}else if(typeof inputs[wireName] !== 'undefined'){
+							newGate.addOutput(inputs[wireName].id);
+							inputs[wireName].setInput(newGate.id);
 						}else{
 							console.log('Undeclared wire ' + wireName);
 							return callback('Undeclared wire ' + wireName, null, null, null);
@@ -779,26 +931,12 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 	var allWires = new Array();
 	for(key in wires){
 		//console.log(key + ' : ' + wires[key].id);
-		allWires.push(wires[key]);
-	}
-	for(key in inputs){
-		//console.log(key + ' : ' + inputs[key].id);
-		allWires.push(inputs[key]);
-	}
-	for(key in outputs){
-		//console.log(key + ' : ' + outputs[key].id);
-		allWires.push(outputs[key]);
-	}
-
-		
-		for(var i = 0; i < allWires.length; i++)
-		if (allWires[i].isFlyingWire()){
-			console.log('Warning, flying wire ');
-			warnings.push('Warning detected flying wire, trimmed before graphing');
-			console.log(allWires[i]);
+		if (wires[key].isFlyingWire()){
+			console.log('Warning, flying wire ' + key);
+			warnings.push('Warning detected flying wire ' + key + ' , trimmed before graphing');
 			for (var j = 0; j < gates.length; j++){
-				var inputIndex = gates[j].inputs.indexOf(allWires[i].id);
-				var outputIndex = gates[j].outputs.indexOf(allWires[i].id);
+				var inputIndex = gates[j].inputs.indexOf(wires[key].id);
+				var outputIndex = gates[j].outputs.indexOf(wires[key].id);
 				if (inputIndex != -1){
 					gates[j].inputs.splice(inputIndex, 1);
 				}
@@ -806,10 +944,46 @@ module.exports.parseNetlist = function parse(content, EDIFContent, callback){ //
 					gates[j].outputs.splice(outputIndex, 1);
 				}
 			}
-			allWires.splice(i, 1);
-			i--;
-		}
-	
+		}else
+			allWires.push(wires[key]);
+	}
+	for(key in inputs){
+		//console.log(key + ' : ' + inputs[key].id);
+		if (inputs[key].isFlyingWire()){
+			console.log('Warning, flying wire ' + key);
+			warnings.push('Warning detected flying wire ' + key + ' , trimmed before graphing');
+			for (var j = 0; j < gates.length; j++){
+				var inputIndex = gates[j].inputs.indexOf(inputs[key].id);
+				var outputIndex = gates[j].outputs.indexOf(inputs[key].id);
+				if (inputIndex != -1){
+					gates[j].inputs.splice(inputIndex, 1);
+				}
+				if(outputIndex != -1){
+					gates[j].outputs.splice(outputIndex, 1);
+				}
+			}
+		}else
+			allWires.push(inputs[key]);
+	}
+	for(key in outputs){
+		//console.log(key + ' : ' + outputs[key].id);
+		if (outputs[key].isFlyingWire()){
+			console.log('Warning, flying wire ' + key);
+			warnings.push('Warning detected flying wire ' + key + ' , trimmed before graphing');
+			for (var j = 0; j < gates.length; j++){
+				var inputIndex = gates[j].inputs.indexOf(outputs[key].id);
+				var outputIndex = gates[j].outputs.indexOf(outputs[key].id);
+				if (inputIndex != -1){
+					gates[j].inputs.splice(inputIndex, 1);
+				}
+				if(outputIndex != -1){
+					gates[j].outputs.splice(outputIndex, 1);
+				}
+			}
+		}else
+			allWires.push(outputs[key]);
+	}
 
+		
 	return callback(null, gates, allWires, warnings);
 }

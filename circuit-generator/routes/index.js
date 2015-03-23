@@ -41,6 +41,11 @@ router.get('/about', function(req, res){ //Netlist upload view.
 	res.render('about', {title: 'About NCG'});
 });
 
+router.get('/circuit', function(req, res){ //Netlist upload view.
+	req.flash('error', 'Please a Verilog netlist file to process.')
+	res.redirect('/');
+});
+
 
 router.post('/circuit', function(req, res){ //Netlist file parser.
 	if(typeof(req.files.netlist) === 'undefined'){
@@ -67,6 +72,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 		    									graphGates: JSON.stringify([]),
 		    									graphWires: JSON.stringify([]),
 		    									graphMapper: JSON.stringify([]),
+		    									connectionWires: JSON.stringify([]),
 		    									content: content});
 		    			fs.unlink(filePath); //Deleting processed file.
 		    		}else{
@@ -128,6 +134,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 		    	var content; //File content holder.
 				fs.readFile(filePath, 'utf8', function read(err, data) { //Reading file content.
 				    if (err) {
+				    	console.log('READ ERROR');
 				    	console.log(err);
 				        res.status(500).send('Error');
 				        fs.unlink(filePath); //Deleting uploaded file.
@@ -136,6 +143,7 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 				    	content = data;
 				    	Parser.parseLibrary(stdCellContent, function(err, parsedEdif){
 				    		if (err) {
+				    			console.log('LIB ERROR');
 						    	console.log(err);
 						        res.status(500).send('Error');
 						        fs.unlink(filePath); //Deleting uploaded file.
@@ -143,12 +151,14 @@ router.post('/circuit', function(req, res){ //Netlist file parser.
 				    		}else{
 				    			Parser.parseNetlist(content, parsedEdif, function(err, gates, wires, warnings){
 						    		if(err){
+						    			console.log('NETLIST ERROR');
 						    			console.log(err);
 						    			res.render('circuit', { title: 'Circuit',
 						    									error: err,
 						    									graphGates: JSON.stringify([]),
 						    									graphWires: JSON.stringify([]),
 						    									graphMapper: JSON.stringify([]),
+						    									connectionWires: JSON.stringify([]),
 						    									content: content});
 						    			fs.unlink(filePath); //Deleting processed file.
 						    			fs.unlink(stdCellFilePath);

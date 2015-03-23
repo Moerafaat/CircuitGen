@@ -17,6 +17,7 @@ var Type = {
 	BUF: 10,
 	XNOR: 11,
 	DFF: 12,
+	JUN: 13
 };
 module.exports.Type = Type;
 
@@ -38,6 +39,7 @@ var VerilogToJointMap = {
 	not: 'Not',
 	buf: 'Repeater',
 	dff: 'Dff',
+	jun: 'Junction',
 	InputPort: 'Input',
 	OutputPort: 'Output'
 };
@@ -51,6 +53,7 @@ module.exports.VerilogToJointMap = {
 	not: 'Not',
 	buf: 'Repeater',
 	dff: 'Dff',
+	jun: 'Junction',
 	InputPort: 'Input',
 	OutputPort: 'Output'
 };
@@ -93,10 +96,13 @@ function getGateName(gate){
 			name = 'xnor';
 			break;
 		case Type.BUF:
-			name - 'buf';
+			name = 'buf';
 			break;
 		case Type.DFF:
-			name - 'dff';
+			name = 'dff';
+			break;
+		case Type.JUN:
+			name = 'junction';
 			break;
 		default:
 			name = 'unknown';
@@ -193,6 +199,28 @@ var Component = function(inputs, outputs){ //Component base model.
 			this.setOpenOutputTerminals(this.openOutputTerminals - 1);
 		}
 	};
+
+	this.removeInput = function(inputPort){
+		if(typeof inputPort === 'undefined')
+			return;
+		var inputIndex = this.inputs.indexOf(inputPort);
+		if (inputIndex == -1)
+			return;
+		this.inputs.splice(inputIndex, 1);
+		this.addGate(this);
+		this.setOpenInputTerminals(this.openInputTerminals + 1);
+	}
+
+	this.removeOutput = function(outputPort){
+		if(typeof outputPort === 'undefined')
+			return;
+		var outputIndex = this.inputs.indexOf(outputPort);
+		if (outputIndex == -1)
+			return;
+		this.outputs.splice(outputIndex, 1);
+		this.addGate(this);
+		this.setOpenOutputTerminals(this.openOutputTerminals + 1);
+	}
 
 	this.clearInputs = function(){
 		this.inputs = [];
@@ -394,6 +422,17 @@ function buf(model, inputs, outputs){
 	this.addGate(this);
 }
 
+junction.prototype = new Component(); //Buffer gate model.
+junction.prototype.constructor = junction;
+function junction(model, inputs, outputs){
+	Component.apply(this, inputs, outputs);
+	this.openInputTerminals = 1;
+	this.defaultInputTerminals = 1;
+	this.type = Type.JUN;
+	this.model = model;
+	this.addGate(this);
+}
+
 dff.prototype = new Component(); //Buffer gate model.
 dff.prototype.constructor = dff;
 function dff(model, inputs, outputs){
@@ -443,6 +482,7 @@ module.exports.buf = buf;
 module.exports.dff = dff;
 module.exports.input = input;
 module.exports.output = output;
+module.exports.junction = junction;
 
 module.exports.component = Component;
 
@@ -634,6 +674,12 @@ PremEDIF = {
 		outputPorts: ['Y'],
 		primitive: 'buf'
 	},
+	P_jun: {
+		name: 'jun',
+		inputPorts: ['A'],
+		outputPorts: ['Y'],
+		primitive: 'jun'
+	},
 	getJointMap: function(){
 		var map = {};
 		for (key in this){
@@ -740,6 +786,25 @@ var EDIF = {
 		outputPorts: ['Y'],
 		primitive: 'dff'
 	},
+	DFF: {
+		name: 'DFF',
+		inputPorts: ['D', 'CLK'],
+		outputPorts: ['Q'],
+		primitive: 'dff'
+	},
+	DFFNEGX1:{
+		name: 'DFFNEGX1',
+		inputPorts: ['D', 'CLK'],
+		outputPorts: ['Q'],
+		primitive: 'dff'
+	},
+	DFFPOSX1:{
+		name: 'DFFPOSX1',
+		inputPorts: ['D', 'CLK'],
+		outputPorts: ['Q'],
+		primitive: 'dff'
+	},
+
 	getJointMap: function(){
 		var map = {};
 		for (key in this){
@@ -762,161 +827,5 @@ var EDIF = {
 
 module.exports.PremEDIF = PremEDIF;
 
-var TestEDIF = {
-	AND2X1: {
-		name: 'AND2X1',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'and'
-	},
-	AND2X2:{
-		name: 'AND2X2',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'and'
-	},
-	MN2X1: {
-		compound: true,
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		getComponent: function(callback){
-			var subG = [];
-			var subGMap = {};
-			var subWMap = {};
-			var pand_1 = new and('P_and');
-			var pand_2 = new and('P_and');
-			var pnot_1 = new not('P_not');
-			var buf_1 = new buf('P_buf');
-
-			var buf_pand1_not_connection = new wire(WireType.CONNECTION);
-			var pand1_pand2_connection = new wire(WireType.CONNECTION);
-			var pnot1_pand2_connection = new wire(WireType.CONNECTION);
-
-			buf_1.addOutput(buf_pand1_not_connection.id);
-			buf_pand1_not_connection.setInput(buf_1.id);
-
-			buf_pand1_not_connection.addOutput(pand_1.id);
-			buf_pand1_not_connection.addOutput(pnot_1.id);
-			pand_1.addInput(buf_pand1_not_connection.id);
-			pnot_1.addInput(buf_pand1_not_connection.id);
-
-			pand1_pand2_connection.setInput(pand_1.id);
-			pand_1.addOutput(pand1_pand2_connection.id);
-
-			pnot1_pand2_connection.setInput(pnot_1.id);
-			pnot_1.addOutput(pnot1_pand2_connection.id);
-
-			pand_2.addInput(pand1_pand2_connection.id);
-			pand1_pand2_connection.addOutput(pand_2.id);
-			pand_2.addInput(pnot1_pand2_connection.id);
-			pnot1_pand2_connection.addOutput(pand_2.id);
-			
-			subGMap['pand_1'] = pand_1;
-			subGMap['pand_2'] = pand_2;
-			subGMap['pnot_1'] = pnot_1;
-			subGMap['buf_1'] = buf_1;
-			
-			subWMap['buf_pand1_not_connection'] = buf_pand1_not_connection;
-			subWMap['pand1_pand2_connection'] = pand1_pand2_connection;
-			subWMap['pnot1_pand2_connection'] = pnot1_pand2_connection;
-
-			for(key in subGMap)
-				subG.push(subGMap[key]);
-			callback(subG, subWMap);
-
-		}
-	},
-	NAND2X1:{
-		compound: true,
-		getComponent: function(inWires, outWires, callback){
-
-		}
-	},
-	OR2X1:{
-		name: 'OR2X1',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'or'
-	},
-	OR2X2:{
-		name: 'OR2X2',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'or'
-	},
-	NOR2X1: {
-		name: 'NOR2X1',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'nor'
-	},
-	NOR2X2: {
-		name: 'NOR2X2',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'nor'
-	},
-	XOR2X1: {
-		name: 'XOR2X1',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'xor'
-	},
-	XOR2X2: {
-		name: 'XOR2X2',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'xor'
-	},
-	XNOR2X1: {
-		name: 'XNOR2X1',
-		inputPorts: ['A', 'B'],
-		outputPorts: ['Y'],
-		primitive: 'xnor'
-	},
-	INVX1:{
-		name: 'INVX1',
-		inputPorts: ['A'],
-		outputPorts: ['Y'],
-		primitive: 'not'
-	},
-	BUFX2:{
-		name: 'BUFX2',
-		inputPorts: ['A'],
-		outputPorts: ['Y'],
-		primitive: 'buf'
-	},
-	BUFX4:{
-		name: 'BUFX4',
-		inputPorts: ['A'],
-		outputPorts: ['Y'],
-		primitive: 'buf'
-	},
-	DFF: {
-		name: 'DFF',
-		inputPorts: ['A', 'CLK'],
-		outputPorts: ['Y'],
-		primitive: 'dff'
-	},
-	getJointMap: function(){
-		var map = {};
-		for (key in this){
-			if (key == 'getJointMap')
-				continue;
-			map[key]= VerilogToJointMap[this[key].primitive];
-		}
-		console.log(module.exports.PremEDIF);
-		for (key in module.exports.PremEDIF){
-			console.log(key + ':');
-			console.log(PremEDIF[key]);
-			if (key == 'getJointMap')
-				continue;
-			map[key]= VerilogToJointMap[PremEDIF[key].primitive];
-		}
-		map['InputPort'] = VerilogToJointMap['InputPort'];
-		map['OutputPort'] = VerilogToJointMap['OutputPort'];
-		return map;
-	}
-};
 
 module.exports.EDIF = EDIF;

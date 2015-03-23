@@ -160,7 +160,7 @@ GraphBuilder.prototype.CrossingReduction = function(){
 	}
 	this.layers[this.layers.length-1].sort(compareY(this.gates));
 
-	var forgiveness_number = 5000;
+	var forgiveness_number = 1000;
 	var lowest_crossings = Number.MAX_VALUE;
 	var final_gates = this.gates;
 	var final_layers = this.layers;
